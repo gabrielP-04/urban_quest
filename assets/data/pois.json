@@ -1,0 +1,137 @@
+[
+  {
+    "id": "poi_001",
+    "name": "Duomo di Milano",
+    "latitude": 45.4642,
+    "longitude": 9.1900,
+    "category": "monument",
+    "description": "La catedral gótica más famosa de Milán, con impresionantes agujas y el Madonnina dorada en la cima.",
+    "imageUrl": null
+  },
+  {
+    "id": "poi_002",
+    "name": "Galleria Vittorio Emanuele II",
+    "latitude": 45.4654,
+    "longitude": 9.1897,
+    "category": "cultural",
+    "description": "Una de las galerías comerciales más antiguas del mundo, con arquitectura de hierro y vidrio del siglo XIX.",
+    "imageUrl": null
+  },
+  {
+    "id": "poi_003",
+    "name": "Teatro alla Scala",
+    "latitude": 45.4674,
+    "longitude": 9.1898,
+    "category": "cultural",
+    "description": "Uno de los teatros de ópera más prestigiosos del mundo, inaugurado en 1778.",
+    "imageUrl": null
+  },
+  {
+    "id": "poi_004",
+    "name": "Castello Sforzesco",
+    "latitude": 45.4706,
+    "longitude": 9.1795,
+    "category": "monument",
+    "description": "Fortaleza medieval que alberga varios museos y obras de arte, incluida la última escultura de Miguel Ángel.",
+    "imageUrl": null
+  },
+  {
+    "id": "poi_005",
+    "name": "Parco Sempione",
+    "latitude": 45.4729,
+    "longitude": 9.1781,
+    "category": "viewpoint",
+    "description": "Gran parque público detrás del Castello Sforzesco, perfecto para paseos y picnics.",
+    "imageUrl": null
+  },
+  {
+    "id": "poi_006",
+    "name": "Santa Maria delle Grazie",
+    "latitude": 45.4659,
+    "longitude": 9.1708,
+    "category": "cultural",
+    "description": "Iglesia que alberga 'La Última Cena' de Leonardo da Vinci, Patrimonio de la Humanidad.",
+    "imageUrl": null
+  },
+  {
+    "id": "poi_007",
+    "name": "Navigli District",
+    "latitude": 45.4475,
+    "longitude": 9.1790,
+    "category": "gastronomy",
+    "description": "Barrio bohemio con canales históricos, repleto de bares, restaurantes y mercados de antigüedades.",
+    "imageUrl": null
+  },
+  {
+    "id": "poi_008",
+    "name": "Pinacoteca di Brera",
+    "latitude": 45.4720,
+    "longitude": 9.1882,
+    "category": "cultural",
+    "description": "Una de las principales galerías de arte de Italia, con obras maestras del Renacimiento.",
+    "imageUrl": null
+  },
+  {
+    "id": "poi_009",
+    "name": "Arco della Pace",
+    "latitude": 45.4763,
+    "longitude": 9.1769,
+    "category": "monument",
+    "description": "Arco triunfal neoclásico en la entrada norte de Parco Sempione.",
+    "imageUrl": null
+  },
+  {
+    "id": "poi_010",
+    "name": "Basilica di Sant'Ambrogio",
+    "latitude": 45.4624,
+    "longitude": 9.1751,
+    "category": "monument",
+    "description": "Una de las iglesias más antiguas de Milán, ejemplo del románico lombardo.",
+    "imageUrl": null
+  },
+  {
+    "id": "poi_011",
+    "name": "Quadrilatero della Moda",
+    "latitude": 45.4681,
+    "longitude": 9.1953,
+    "category": "cultural",
+    "description": "El distrito de la moda de lujo de Milán, con las boutiques más exclusivas del mundo.",
+    "imageUrl": null
+  },
+  {
+    "id": "poi_012",
+    "name": "Mercato di Porta Romana",
+    "latitude": 45.4493,
+    "longitude": 9.2016,
+    "category": "gastronomy",
+    "description": "Mercado tradicional con productos frescos, quesos, y especialidades italianas.",
+    "imageUrl": null
+  },
+  {
+    "id": "poi_013",
+    "name": "Torre Branca",
+    "latitude": 45.4734,
+    "longitude": 9.1775,
+    "category": "viewpoint",
+    "description": "Torre panorámica en Parco Sempione con vistas de 360° de Milán.",
+    "imageUrl": null
+  },
+  {
+    "id": "poi_014",
+    "name": "Colonne di San Lorenzo",
+    "latitude": 45.4582,
+    "longitude": 9.1858,
+    "category": "monument",
+    "description": "Antiguas columnas romanas del siglo II, popular punto de encuentro nocturno.",
+    "imageUrl": null
+  },
+  {
+    "id": "poi_015",
+    "name": "Pirelli Hangar Bicocca",
+    "latitude": 45.5217,
+    "longitude": 9.2115,
+    "category": "cultural",
+    "description": "Espacio de arte contemporáneo en una antigua fábrica de Pirelli.",
+    "imageUrl": null
+  }
+]

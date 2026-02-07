@@ -1,0 +1,34 @@
+[
+  {
+    "id": "route_001",
+    "name": "Centro Histórico",
+    "description": "Descubre los monumentos más emblemáticos del centro de Milán",
+    "poiIds": ["poi_001", "poi_002", "poi_003", "poi_004"],
+    "estimatedDurationMinutes": 120,
+    "difficulty": "easy"
+  },
+  {
+    "id": "route_002",
+    "name": "Arte y Cultura",
+    "description": "Un recorrido por los tesoros artísticos de Milán",
+    "poiIds": ["poi_006", "poi_008", "poi_003", "poi_015"],
+    "estimatedDurationMinutes": 180,
+    "difficulty": "medium"
+  },
+  {
+    "id": "route_003",
+    "name": "Sabor Milanés",
+    "description": "Explora los mejores lugares gastronómicos de la ciudad",
+    "poiIds": ["poi_007", "poi_012", "poi_002"],
+    "estimatedDurationMinutes": 90,
+    "difficulty": "easy"
+  },
+  {
+    "id": "route_004",
+    "name": "Vistas Panorámicas",
+    "description": "Los mejores miradores y espacios verdes de Milán",
+    "poiIds": ["poi_005", "poi_009", "poi_013"],
+    "estimatedDurationMinutes": 60,
+    "difficulty": "easy"
+  }
+]
