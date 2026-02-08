@@ -162,6 +162,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         controller: _nameController,
                         hintText: 'Full Name',
                         icon: Icons.person_outline,
+                        textInputAction: TextInputAction.next,
                         validator: (value) {
                           if (value == null || value.trim().isEmpty) {
                             return 'Enter your name';
@@ -176,6 +177,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         controller: _emailController,
                         hintText: 'Email',
                         icon: Icons.email_outlined,
+                        textInputAction: TextInputAction.next,
                         keyboardType: TextInputType.emailAddress,
                         validator: (value) {
                           if (value == null || value.isEmpty) {
@@ -194,6 +196,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         controller: _passwordController,
                         hintText: 'Password',
                         icon: Icons.lock_outline,
+                        textInputAction: TextInputAction.next,
                         obscureText: _obscurePassword,
                         showToggle: true,
                         onToggle: () {
@@ -216,6 +219,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         controller: _confirmPasswordController,
                         hintText: 'Confirm Password',
                         icon: Icons.lock_outline,
+                        textInputAction: TextInputAction.done,
                         obscureText: _obscureConfirmPassword,
                         showToggle: true,
                         onToggle: () {
@@ -353,6 +357,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     required TextEditingController controller,
     required String hintText,
     required IconData icon,
+    required TextInputAction textInputAction,
     TextInputType? keyboardType,
     bool obscureText = false,
     bool showToggle = false,
@@ -380,6 +385,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 controller: controller,
                 keyboardType: keyboardType,
                 obscureText: obscureText,
+                textInputAction: textInputAction,
                 onChanged: (v) {
                   state.didChange(v); // actualiza el valor del FormField
                 },

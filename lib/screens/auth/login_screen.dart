@@ -121,6 +121,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         controller: _emailController,
                         hintText: 'Email',
                         icon: Icons.email_outlined,
+                        textInputAction: TextInputAction.next,
                         keyboardType: TextInputType.emailAddress,
                         validator: (value) {
                           if (value == null || value.isEmpty) {
@@ -139,6 +140,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         controller: _passwordController,
                         hintText: 'Password',
                         icon: Icons.lock_outline,
+                        textInputAction: TextInputAction.done,
                         obscureText: _obscurePassword,
                         showToggle: true,
                         onToggle: () {
@@ -273,6 +275,7 @@ class _LoginScreenState extends State<LoginScreen> {
     required TextEditingController controller,
     required String hintText,
     required IconData icon,
+    required TextInputAction textInputAction,
     TextInputType? keyboardType,
     bool obscureText = false,
     bool showToggle = false,
@@ -297,6 +300,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 ],
               ),
               child: TextField(
+                textInputAction: textInputAction,
                 controller: controller,
                 keyboardType: keyboardType,
                 obscureText: obscureText,

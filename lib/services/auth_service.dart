@@ -101,7 +101,7 @@ class AuthService {
       case 'operation-not-allowed':
         return 'This operation is not allowed at the moment.';
       case 'invalid-credential':
-        return 'The provided credentials are not valid.';
+        return 'The email or password is incorrect. Please try again.';
       case 'network-request-failed':
         return 'Network error. Please check your internet connection.';
       case 'requires-recent-login':
