@@ -70,7 +70,6 @@ class _LoginScreenState extends State<LoginScreen> {
         child: SingleChildScrollView(
           child: Column(
             children: [
-              // Banner superior con imagen
               // Banner superior con imagen y título superpuesto
               Stack(
                 children: [
@@ -204,9 +203,7 @@ class _LoginScreenState extends State<LoginScreen> {
                               Icons.lock_outline,
                               color: Color(0xFFBDBDBD),
                             ),
-                            suffixIcon: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
+                            suffixIcon:
                                 IconButton(
                                   icon: Icon(
                                     _obscurePassword
@@ -220,8 +217,6 @@ class _LoginScreenState extends State<LoginScreen> {
                                     });
                                   },
                                 ),
-                              ],
-                            ),
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(16),
                               borderSide: BorderSide.none,
@@ -311,6 +306,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             style: TextStyle(
                               color: Color(0xFFFF9A56),
                               fontSize: 14,
+                              fontWeight: FontWeight.bold
                             ),
                           ),
                         ),

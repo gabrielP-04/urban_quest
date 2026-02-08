@@ -1,11 +1,10 @@
 class UserProfile {
   final String userId;
   final String email;
-  final String displayName;      // NUEVO
-  final String username;         // NUEVO
-  final String firstName;        // NUEVO
-  final String lastName;         // NUEVO
-  final String country;          // NUEVO
+  final String displayName;      
+  final String username;         
+  final String firstName;        
+  final String lastName;         
   final int experiencePoints;
   final List<String> visitedPoiIds;
   final List<String> completedRouteIds;
@@ -20,7 +19,6 @@ class UserProfile {
     required this.username,
     required this.firstName,
     required this.lastName,
-    required this.country,
     this.experiencePoints = 0,
     this.visitedPoiIds = const [],
     this.completedRouteIds = const [],
@@ -39,7 +37,6 @@ class UserProfile {
       username: data['username'] as String? ?? '',
       firstName: data['firstName'] as String? ?? '',
       lastName: data['lastName'] as String? ?? '',
-      country: data['country'] as String? ?? '',
       experiencePoints: data['experiencePoints'] as int? ?? 0,
       visitedPoiIds: List<String>.from(data['visitedPoiIds'] ?? []),
       completedRouteIds: List<String>.from(data['completedRouteIds'] ?? []),
@@ -57,7 +54,6 @@ class UserProfile {
       'username': username,
       'firstName': firstName,
       'lastName': lastName,
-      'country': country,
       'experiencePoints': experiencePoints,
       'visitedPoiIds': visitedPoiIds,
       'completedRouteIds': completedRouteIds,
@@ -90,7 +86,6 @@ class UserProfile {
       username: username ?? this.username,
       firstName: firstName ?? this.firstName,
       lastName: lastName ?? this.lastName,
-      country: country ?? this.country,
       experiencePoints: experiencePoints ?? this.experiencePoints,
       visitedPoiIds: visitedPoiIds ?? this.visitedPoiIds,
       completedRouteIds: completedRouteIds ?? this.completedRouteIds,

@@ -13,7 +13,6 @@ class FirestoreService {
     required String firstName,
     required String lastName,
     required String username,
-    required String country,
   }) async {
     try {
       // Verificar si ya existe el perfil
@@ -40,7 +39,6 @@ class FirestoreService {
         'username': username,
         'firstName': firstName,
         'lastName': lastName,
-        'country': country,
         'experiencePoints': 0,
         'visitedPoiIds': [],
         'completedRouteIds': [],

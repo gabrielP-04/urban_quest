@@ -110,20 +110,6 @@ class HomeScreen extends StatelessWidget {
                         ),
                         const SizedBox(height: 4),
 
-                        // País
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            const Icon(Icons.public, size: 16, color: Colors.grey),
-                            const SizedBox(width: 4),
-                            Text(
-                              profile.country,
-                              style: const TextStyle(color: Colors.grey),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 32),
-
                         // Estadísticas
                         Container(
                           padding: const EdgeInsets.all(16),

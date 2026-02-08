@@ -74,7 +74,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
           firstName: firstName,
           lastName: lastName,
           username: username,
-          country: 'Italy', // Por defecto Italia (Milan)
         );
       }
 
