@@ -106,7 +106,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color.fromARGB(255, 254, 248, 253),
       body: SafeArea(
         child: SingleChildScrollView(
           child: Column(
@@ -127,7 +126,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   ),
 
                   // Título y subtítulo sobre la imagen
-                  const Positioned(
+                  Positioned(
                     bottom: 15,
                     left: 0,
                     right: 0,
@@ -136,20 +135,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         Text(
                           'Sign Up',
                           textAlign: TextAlign.center,
-                          style: TextStyle(
-                            fontSize: 36,
-                            fontWeight: FontWeight.bold,
-                            color: Color(0xFF5A5A5A),
-                          ),
+                          style: Theme.of(context).textTheme.displayLarge,
                         ),
-                        SizedBox(height: 8),
+                        const SizedBox(height: 8),
                         Text(
                           'Create an account to start your adventure.',
                           textAlign: TextAlign.center,
-                          style: TextStyle(
-                            fontSize: 16,
-                            color: Color.fromARGB(255, 119, 119, 119),
-                          ),
+                          style: Theme.of(context).textTheme.displayMedium
                         ),
                       ],
                     ),
@@ -271,20 +263,20 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             ),
                           ),
                           child: _isLoading
-                              ? const SizedBox(
+                              ? SizedBox(
                                   height: 24,
                                   width: 24,
                                   child: CircularProgressIndicator(
-                                    color: Colors.white,
+                                    color: Theme.of(context).colorScheme.onPrimary,
                                     strokeWidth: 2,
                                   ),
                                 )
-                              : const Text(
+                              : Text(
                                   'Create Account',
                                   style: TextStyle(
                                     fontSize: 18,
                                     fontWeight: FontWeight.bold,
-                                    color: Colors.white,
+                                    color: Theme.of(context).colorScheme.onPrimary,
                                   ),
                                 ),
                         ),
@@ -294,25 +286,22 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       // Términos y condiciones
                       RichText(
                         textAlign: TextAlign.center,
-                        text: const TextSpan(
-                          style: TextStyle(
-                            fontSize: 13,
-                            color: Color(0xFF9E9E9E),
-                          ),
-                          children: [
-                            TextSpan(text: 'By signing up you accept our\n'),
+                        text: TextSpan(
+                          style: Theme.of(context).textTheme.bodySmall,
+                          children:  [
+                            const TextSpan(text: 'By signing up you accept our\n'),
                             TextSpan(
                               text: 'Terms & Conditions',
                               style: TextStyle(
-                                color: Color(0xFFFF9A56),
+                                color: Theme.of(context).colorScheme.secondary,
                                 fontWeight: FontWeight.w600,
                               ),
                             ),
-                            TextSpan(text: ' and '),
+                            const TextSpan(text: ' and '),
                             TextSpan(
                               text: 'Privacy Policy',
                               style: TextStyle(
-                                color: Color(0xFFFF9A56),
+                                color: Theme.of(context).colorScheme.secondary,
                                 fontWeight: FontWeight.w600,
                               ),
                             ),
@@ -326,12 +315,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            const Text(
+                            Text(
                               'Already have an account? ',
-                              style: TextStyle(
-                                color: Color(0xFF9E9E9E),
-                                fontSize: 14,
-                              ),
+                              style: Theme.of(context).textTheme.bodySmall,
                             ),
                             TextButton(
                               onPressed: () => Navigator.pop(context),
@@ -340,10 +326,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                 minimumSize: const Size(0, 0),
                                 tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                               ),
-                              child: const Text(
+                              child: Text(
                                 'Sign In',
                                 style: TextStyle(
-                                  color: Color(0xFFFF9A56),
+                                  color: Theme.of(context).colorScheme.secondary,
                                   fontSize: 14,
                                   fontWeight: FontWeight.bold,
                                 ),
@@ -363,8 +349,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     );
   }
 
-  // Widget helper para campos de texto
-  Widget _buildTextField({
+   Widget _buildTextField({
     required TextEditingController controller,
     required String hintText,
     required IconData icon,
@@ -374,61 +359,73 @@ class _RegisterScreenState extends State<RegisterScreen> {
     VoidCallback? onToggle,
     String? Function(String?)? validator,
   }) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.1),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: TextFormField(
-        controller: controller,
-        keyboardType: keyboardType,
-        obscureText: obscureText,
-        style: const TextStyle(fontSize: 16),
-        decoration: InputDecoration(
-          hintText: hintText,
-          hintStyle: const TextStyle(
-            color: Color(0xFFBDBDBD),
-          ),
-          prefixIcon: Icon(
-            icon,
-            color: const Color(0xFFBDBDBD),
-          ),
-          suffixIcon: showToggle
-              ? Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    IconButton(
-                      icon: Icon(
-                        obscureText
-                            ? Icons.visibility_outlined
-                            : Icons.visibility_off_outlined,
-                        color: const Color(0xFFBDBDBD),
-                      ),
-                      onPressed: onToggle,
+    return FormField<String>(
+      validator: validator,
+      builder: (FormFieldState<String> state) {
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.10),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: TextField(
+                controller: controller,
+                keyboardType: keyboardType,
+                obscureText: obscureText,
+                onChanged: (v) {
+                  state.didChange(v); // actualiza el valor del FormField
+                },
+                onEditingComplete: () {
+                  state.validate(); // fuerza validación al terminar
+                  FocusScope.of(state.context).nextFocus();
+                },
+                decoration: InputDecoration(
+                  hintText: hintText,
+                  prefixIcon: Icon(icon),
+                  suffixIcon: showToggle
+                      ? IconButton(
+                          icon: Icon(
+                            obscureText
+                                ? Icons.visibility_outlined
+                                : Icons.visibility_off_outlined,
+                          ),
+                          onPressed: onToggle,
+                        )
+                      : null,
+                  filled: true,
+                  fillColor: Theme.of(state.context).colorScheme.surface,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: BorderSide.none,
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 18,
+                  ),
+                ),
+              ),
+            ),
+
+            if (state.hasError) ...[
+              const SizedBox(height: 6),
+              Text(
+                state.errorText!,
+                style: Theme.of(state.context).textTheme.bodySmall?.copyWith(
+                color: Theme.of(state.context).colorScheme.error,
                     ),
-                  ],
-                )
-              : null,
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(16),
-            borderSide: BorderSide.none,
-          ),
-          filled: true,
-          fillColor: Colors.white,
-          contentPadding: const EdgeInsets.symmetric(
-            horizontal: 20,
-            vertical: 18,
-          ),
-        ),
-        validator: validator,
-      ),
+              ),
+            ],
+          ],
+        );
+      },
     );
   }
 }

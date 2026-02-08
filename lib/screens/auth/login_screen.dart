@@ -43,7 +43,7 @@ class _LoginScreenState extends State<LoginScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(e.toString()),
-            backgroundColor: Colors.red,
+            backgroundColor: Theme.of(context).colorScheme.error,
             behavior: SnackBarBehavior.floating,
           ),
         );
@@ -65,7 +65,6 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color.fromARGB(255, 254, 248, 253),
       body: SafeArea(
         child: SingleChildScrollView(
           child: Column(
@@ -86,7 +85,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
 
                   // Título y subtítulo sobre la imagen
-                  const Positioned(
+                  Positioned(
                     bottom: 15,
                     left: 0,
                     right: 0,
@@ -95,20 +94,13 @@ class _LoginScreenState extends State<LoginScreen> {
                         Text(
                           'Welcome',
                           textAlign: TextAlign.center,
-                          style: TextStyle(
-                            fontSize: 36,
-                            fontWeight: FontWeight.bold,
-                            color: Color(0xFF5A5A5A),
-                          ),
+                          style: Theme.of(context).textTheme.displayLarge,
                         ),
-                        SizedBox(height: 8),
+                        const SizedBox(height: 8),
                         Text(
                           'Explore the city and discover its secrets',
                           textAlign: TextAlign.center,
-                          style: TextStyle(
-                            fontSize: 16,
-                            color: Color.fromARGB(255, 119, 119, 119),
-                          ),
+                          style: Theme.of(context).textTheme.displayMedium,
                         ),
                       ],
                     ),
@@ -125,120 +117,44 @@ class _LoginScreenState extends State<LoginScreen> {
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       // Campo Email
-                      Container(
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(16),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.1),
-                              blurRadius: 10,
-                              offset: const Offset(0, 4),
-                            ),
-                          ],
-                        ),
-                        child: TextFormField(
-                          controller: _emailController,
-                          keyboardType: TextInputType.emailAddress,
-                          textInputAction: TextInputAction.next,
-                          style: const TextStyle(fontSize: 16),
-                          decoration: InputDecoration(
-                            hintText: 'Email',
-                            hintStyle: const TextStyle(
-                              color: Color(0xFFBDBDBD),
-                            ),
-                            prefixIcon: const Icon(
-                              Icons.email_outlined,
-                              color: Color(0xFFBDBDBD),
-                            ),
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(16),
-                              borderSide: BorderSide.none,
-                            ),
-                            filled: true,
-                            fillColor: Colors.white,
-                            contentPadding: const EdgeInsets.symmetric(
-                              horizontal: 20,
-                              vertical: 18,
-                            ),
-                          ),
-                          validator: (value) {
-                            if (value == null || value.isEmpty) {
-                              return 'Enter your email';
-                            }
-                            if (!value.contains('@')) {
-                              return 'Enter a valid email';
-                            }
-                            return null;
-                          },
-                        ),
+                      _buildTextField(
+                        controller: _emailController,
+                        hintText: 'Email',
+                        icon: Icons.email_outlined,
+                        keyboardType: TextInputType.emailAddress,
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Enter your email';
+                          }
+                          if (!value.contains('@')) {
+                            return 'Enter a valid email';
+                          }
+                          return null;
+                        },
                       ),
                       const SizedBox(height: 16),
 
                       // Campo Contraseña
-                      Container(
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(16),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.1),
-                              blurRadius: 10,
-                              offset: const Offset(0, 4),
-                            ),
-                          ],
-                        ),
-                        child: TextFormField(
-                          controller: _passwordController,
-                          obscureText: _obscurePassword,
-                          textInputAction: TextInputAction.done,
-                          onFieldSubmitted: (_) => _signIn(),
-                          style: const TextStyle(fontSize: 16),
-                          decoration: InputDecoration(
-                            hintText: 'Password',
-                            hintStyle: const TextStyle(
-                              color: Color(0xFFBDBDBD),
-                            ),
-                            prefixIcon: const Icon(
-                              Icons.lock_outline,
-                              color: Color(0xFFBDBDBD),
-                            ),
-                            suffixIcon:
-                                IconButton(
-                                  icon: Icon(
-                                    _obscurePassword
-                                        ? Icons.visibility_outlined
-                                        : Icons.visibility_off_outlined,
-                                    color: const Color(0xFFBDBDBD),
-                                  ),
-                                  onPressed: () {
-                                    setState(() {
-                                      _obscurePassword = !_obscurePassword;
-                                    });
-                                  },
-                                ),
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(16),
-                              borderSide: BorderSide.none,
-                            ),
-                            filled: true,
-                            fillColor: Colors.white,
-                            contentPadding: const EdgeInsets.symmetric(
-                              horizontal: 20,
-                              vertical: 18,
-                            ),
-                          ),
-                          validator: (value) {
-                            if (value == null || value.isEmpty) {
-                              return 'Enter your password';
-                            }
-                            if (value.length < 6) {
-                              return 'Password must be at least 6 characters';
-                            }
-                            return null;
-                          },
-                        ),
+                      _buildTextField(
+                        controller: _passwordController,
+                        hintText: 'Password',
+                        icon: Icons.lock_outline,
+                        obscureText: _obscurePassword,
+                        showToggle: true,
+                        onToggle: () {
+                          setState(() => _obscurePassword = !_obscurePassword);
+                        },
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Enter a password';
+                          }
+                          if (value.length < 6) {
+                            return 'At least 6 characters';
+                          }
+                          return null;
+                        },
                       ),
+
                       const SizedBox(height: 24),
 
                       // Botón Login
@@ -254,7 +170,8 @@ class _LoginScreenState extends State<LoginScreen> {
                           borderRadius: BorderRadius.circular(16),
                           boxShadow: [
                             BoxShadow(
-                              color: const Color(0xFFFF9A56).withValues(alpha: 0.3),
+                              color: const Color(0xFFFF9A56)
+                                  .withValues(alpha: 0.3),
                               blurRadius: 12,
                               offset: const Offset(0, 6),
                             ),
@@ -301,13 +218,12 @@ class _LoginScreenState extends State<LoginScreen> {
                               ),
                             );
                           },
-                          child: const Text(
+                          child: Text(
                             'Forgot your password?',
                             style: TextStyle(
-                              color: Color(0xFFFF9A56),
-                              fontSize: 14,
-                              fontWeight: FontWeight.bold
-                            ),
+                                color: Theme.of(context).colorScheme.secondary,
+                                fontSize: 14,
+                                fontWeight: FontWeight.bold),
                           ),
                         ),
                       ),
@@ -318,12 +234,9 @@ class _LoginScreenState extends State<LoginScreen> {
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            const Text(
+                            Text(
                               "Don't have an account yet? ",
-                              style: TextStyle(
-                                color: Color(0xFF9E9E9E),
-                                fontSize: 14,
-                              ),
+                              style: Theme.of(context).textTheme.bodySmall,
                             ),
                             TextButton(
                               onPressed: _goToRegister,
@@ -332,10 +245,11 @@ class _LoginScreenState extends State<LoginScreen> {
                                 minimumSize: const Size(0, 0),
                                 tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                               ),
-                              child: const Text(
+                              child: Text(
                                 'Sign Up',
                                 style: TextStyle(
-                                  color: Color(0xFFFF9A56),
+                                  color:
+                                      Theme.of(context).colorScheme.secondary,
                                   fontSize: 14,
                                   fontWeight: FontWeight.bold,
                                 ),
@@ -352,6 +266,86 @@ class _LoginScreenState extends State<LoginScreen> {
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildTextField({
+    required TextEditingController controller,
+    required String hintText,
+    required IconData icon,
+    TextInputType? keyboardType,
+    bool obscureText = false,
+    bool showToggle = false,
+    VoidCallback? onToggle,
+    String? Function(String?)? validator,
+  }) {
+    return FormField<String>(
+      validator: validator,
+      builder: (FormFieldState<String> state) {
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.10),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: TextField(
+                controller: controller,
+                keyboardType: keyboardType,
+                obscureText: obscureText,
+                onChanged: (v) {
+                  state.didChange(v); // actualiza el valor del FormField
+                },
+                onEditingComplete: () {
+                  state.validate(); // fuerza validación al terminar
+                  FocusScope.of(state.context).nextFocus();
+                },
+                decoration: InputDecoration(
+                  hintText: hintText,
+                  prefixIcon: Icon(icon),
+                  suffixIcon: showToggle
+                      ? IconButton(
+                          icon: Icon(
+                            obscureText
+                                ? Icons.visibility_outlined
+                                : Icons.visibility_off_outlined,
+                          ),
+                          onPressed: onToggle,
+                        )
+                      : null,
+                  filled: true,
+                  fillColor: Theme.of(state.context).colorScheme.surface,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: BorderSide.none,
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 18,
+                  ),
+                ),
+              ),
+            ),
+
+            if (state.hasError) ...[
+              const SizedBox(height: 6),
+              Text(
+                state.errorText!,
+                style: Theme.of(state.context).textTheme.bodySmall?.copyWith(
+                color: Theme.of(state.context).colorScheme.error,
+                    ),
+              ),
+            ],
+          ],
+        );
+      },
     );
   }
 }
