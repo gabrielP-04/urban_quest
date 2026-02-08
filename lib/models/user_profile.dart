@@ -1,6 +1,11 @@
 class UserProfile {
   final String userId;
   final String email;
+  final String displayName;      // NUEVO
+  final String username;         // NUEVO
+  final String firstName;        // NUEVO
+  final String lastName;         // NUEVO
+  final String country;          // NUEVO
   final int experiencePoints;
   final List<String> visitedPoiIds;
   final List<String> completedRouteIds;
@@ -11,6 +16,11 @@ class UserProfile {
   UserProfile({
     required this.userId,
     required this.email,
+    required this.displayName,
+    required this.username,
+    required this.firstName,
+    required this.lastName,
+    required this.country,
     this.experiencePoints = 0,
     this.visitedPoiIds = const [],
     this.completedRouteIds = const [],
@@ -25,6 +35,11 @@ class UserProfile {
     return UserProfile(
       userId: userId,
       email: data['email'] as String,
+      displayName: data['displayName'] as String? ?? '',
+      username: data['username'] as String? ?? '',
+      firstName: data['firstName'] as String? ?? '',
+      lastName: data['lastName'] as String? ?? '',
+      country: data['country'] as String? ?? '',
       experiencePoints: data['experiencePoints'] as int? ?? 0,
       visitedPoiIds: List<String>.from(data['visitedPoiIds'] ?? []),
       completedRouteIds: List<String>.from(data['completedRouteIds'] ?? []),
@@ -38,6 +53,11 @@ class UserProfile {
   Map<String, dynamic> toFirestore() {
     return {
       'email': email,
+      'displayName': displayName,
+      'username': username,
+      'firstName': firstName,
+      'lastName': lastName,
+      'country': country,
       'experiencePoints': experiencePoints,
       'visitedPoiIds': visitedPoiIds,
       'completedRouteIds': completedRouteIds,
@@ -47,10 +67,15 @@ class UserProfile {
     };
   }
 
-  // Copiar con cambios (útil para actualizar)
+  // Copiar con cambios
   UserProfile copyWith({
     String? userId,
     String? email,
+    String? displayName,
+    String? username,
+    String? firstName,
+    String? lastName,
+    String? country,
     int? experiencePoints,
     List<String>? visitedPoiIds,
     List<String>? completedRouteIds,
@@ -61,6 +86,11 @@ class UserProfile {
     return UserProfile(
       userId: userId ?? this.userId,
       email: email ?? this.email,
+      displayName: displayName ?? this.displayName,
+      username: username ?? this.username,
+      firstName: firstName ?? this.firstName,
+      lastName: lastName ?? this.lastName,
+      country: country ?? this.country,
       experiencePoints: experiencePoints ?? this.experiencePoints,
       visitedPoiIds: visitedPoiIds ?? this.visitedPoiIds,
       completedRouteIds: completedRouteIds ?? this.completedRouteIds,
@@ -73,4 +103,7 @@ class UserProfile {
   int get totalPoisVisited => visitedPoiIds.length;
   int get totalRoutesCompleted => completedRouteIds.length;
   int get totalAchievements => achievementIds.length;
+  
+  // NUEVO: Nombre completo
+  String get fullName => '$firstName $lastName'.trim();
 }

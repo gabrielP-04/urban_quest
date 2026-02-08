@@ -23,10 +23,11 @@ class MyApp extends StatelessWidget {
       title: 'UrbanQuest',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
-        primarySwatch: Colors.blue,
+        primarySwatch: Colors.deepOrange,
         useMaterial3: true,
         colorScheme: ColorScheme.fromSeed(
-          seedColor: Colors.blue,
+          seedColor: Colors.deepOrange,
+          primary: Colors.deepOrange,
           brightness: Brightness.light,
         ),
       ),
