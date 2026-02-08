@@ -100,7 +100,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         Text(
                           'Explore the city and discover its secrets',
                           textAlign: TextAlign.center,
-                          style: Theme.of(context).textTheme.displayMedium,
+                          style: Theme.of(context).textTheme.displaySmall,
                         ),
                       ],
                     ),
