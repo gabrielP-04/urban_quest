@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../services/auth_service.dart';
 
-class AccountSecurityScreen extends StatelessWidget {
+class AccountSecurityScreen extends StatefulWidget {
   const AccountSecurityScreen({Key? key}) : super(key: key);
 
   @override
@@ -10,8 +10,6 @@ class AccountSecurityScreen extends StatelessWidget {
 
 class _AccountSecurityScreenState extends State<AccountSecurityScreen> {
   final _authService = AuthService();
-
-  String? get _email => _authService.currentUserEmail;
 
   Future<void> _changeEmail(
     BuildContext context,
@@ -83,8 +81,6 @@ class _AccountSecurityScreenState extends State<AccountSecurityScreen> {
   @override
   Widget build(BuildContext context) {
     final authService = AuthService();
-    final firestoreService = FirestoreService();
-    final userId = authService.currentUserId;
     final email = authService.currentUserEmail;
 
     return Scaffold(
