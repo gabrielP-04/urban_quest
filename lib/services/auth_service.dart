@@ -81,7 +81,66 @@ class AuthService {
     }
   }
 
-  
+  /// Cambiar email (requiere verificación)
+  Future<void> changeEmail({
+    required String newEmail,
+    required String password,
+  }) async {
+    final user = _auth.currentUser;
+
+    if (user == null || user.email == null) {
+      throw 'User not authenticated';
+    }
+
+    try {
+      // Re-autenticar al usuario primero
+      final credential = EmailAuthProvider.credential(
+        email: user.email!,
+        password: password,
+      );
+
+      await user.reauthenticateWithCredential(credential);
+
+      // Enviar email de verificación al nuevo correo
+      // El usuario debe verificar el nuevo email antes de que se actualice
+      await user.verifyBeforeUpdateEmail(newEmail);
+
+    } on FirebaseAuthException catch (e) {
+      throw _handleAuthException(e);
+    } catch (e) {
+      throw 'Unexpected error. Please try again.';
+    }
+  }
+
+  /// Cambiar contraseña
+  Future<void> changePassword({
+    required String currentPassword,
+    required String newPassword,
+  }) async {
+    final user = _auth.currentUser;
+
+    if (user == null || user.email == null) {
+      throw 'User not authenticated';
+    }
+
+    try {
+      // Re-autenticar al usuario primero
+      final credential = EmailAuthProvider.credential(
+        email: user.email!,
+        password: currentPassword,
+      );
+
+      await user.reauthenticateWithCredential(credential);
+
+      // Cambiar la contraseña
+      await user.updatePassword(newPassword);
+
+    } on FirebaseAuthException catch (e) {
+      throw _handleAuthException(e);
+    } catch (e) {
+      throw 'Unexpected error. Please try again.';
+    }
+  }
 
   /// Manejo de errores de Firebase Auth en español
   String _handleAuthException(FirebaseAuthException e) {

@@ -1,10 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'login_screen.dart';
-import '../main_scaffold.dart'; 
+import '../main_scaffold.dart';
+import '../../services/firestore_service.dart';
 
-class AuthWrapper extends StatelessWidget {
+class AuthWrapper extends StatefulWidget {
   const AuthWrapper({Key? key}) : super(key: key);
+
+  @override
+  State<AuthWrapper> createState() => _AuthWrapperState();
+}
+
+class _AuthWrapperState extends State<AuthWrapper> {
+  final FirestoreService _firestoreService = FirestoreService();
+  String? _lastSyncedEmail;
 
   @override
   Widget build(BuildContext context) {
@@ -38,14 +47,53 @@ class AuthWrapper extends StatelessWidget {
           );
         }
 
-        // Si hay usuario → MainScaffold (con todas las tabs)
+        // Si hay usuario → Sincronizar email si cambió
         if (snapshot.hasData && snapshot.data != null) {
-          return const MainScaffold(); // ✅ Cambiado
+          final user = snapshot.data!;
+          
+          // Sincronizar email con Firestore si cambió y está verificado
+          if (user.email != null && 
+              user.emailVerified && 
+              user.email != _lastSyncedEmail) {
+            _syncEmailWithFirestore(user);
+          }
+
+          return const MainScaffold();
         }
 
         // Si no hay usuario → Login
         return const LoginScreen();
       },
     );
+  }
+
+  /// Sincroniza el email de Firebase Auth con Firestore
+  Future<void> _syncEmailWithFirestore(User user) async {
+    try {
+      // Obtener el perfil actual de Firestore
+      final profile = await _firestoreService.getUserProfile(user.uid);
+
+      // Si el email en Firestore es diferente al de Auth, actualizar
+      if (profile != null && profile.email != user.email) {
+        await _firestoreService.updateUserEmail(
+          userId: user.uid,
+          email: user.email!,
+        );
+        
+        // Actualizar el último email sincronizado
+        setState(() {
+          _lastSyncedEmail = user.email;
+        });
+        
+        debugPrint('✅ Email sincronizado en Firestore: ${user.email}');
+      } else {
+        // Actualizar el último email sincronizado aunque no haya cambiado
+        setState(() {
+          _lastSyncedEmail = user.email;
+        });
+      }
+    } catch (e) {
+      debugPrint('❌ Error al sincronizar email: $e');
+    }
   }
 }
