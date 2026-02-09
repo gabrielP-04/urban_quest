@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:urban_quest/screens/main_scaffold.dart';
 import '../map/map_screen.dart';
 import '../../services/auth_service.dart';
 import '../../services/firestore_service.dart';
@@ -182,10 +183,8 @@ class _MapPreviewCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (_) => const MapScreen()),
-        );
+        MainScaffold.of(context)?.changeTab(1);
+
       },
       child: ClipRRect(
         borderRadius: BorderRadius.circular(18),
@@ -194,7 +193,6 @@ class _MapPreviewCard extends StatelessWidget {
           color: Colors.grey.shade300,
           child: Stack(
             children: [
-              // Placeholder visual (más adelante aquí meteremos Google Maps o una imagen)
               Positioned.fill(
                 child: Opacity(
                   opacity: 0.35,
@@ -225,11 +223,7 @@ class _QuickActionsRow extends StatelessWidget {
             icon: Icons.place,
             color: Colors.deepOrange,
             onTap: () {
-              // luego: ir al mapa y centrar en el usuario
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const MapScreen()),
-              );
+              MainScaffold.of(context)?.changeTab(1); // 1 = Map
             },
           ),
         ),

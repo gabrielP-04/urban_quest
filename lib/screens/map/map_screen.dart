@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:geolocator/geolocator.dart';
@@ -35,15 +37,35 @@ class _MapScreenState extends State<MapScreen> {
 
   int get _totalPois => _pois.length;
 
+  final MapController _mapController = MapController();
+
   double get _progressPercent =>
       _totalPois == 0 ? 0 : _visitedCount / _totalPois;
+
+  StreamSubscription<Position>? _positionSub;
 
   @override
   void initState() {
     super.initState();
     _loadPois();
-    _loadUserLocation();
     _loadVisitedPois();
+   // _loadXp();
+    _startListeningToLocation();
+  }
+
+  void _startListeningToLocation() {
+    _positionSub = LocationService.getPositionStream().listen((position) {
+      setState(() {
+        _userPosition = position;
+      });
+      _checkNearbyPoi();
+    });
+  }
+
+  @override
+  void dispose() {
+    _positionSub?.cancel();
+    super.dispose();
   }
 
   Future<void> _loadPois() async {
@@ -76,67 +98,99 @@ class _MapScreenState extends State<MapScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Map'),
-      ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : Stack(
-              children: [
-                FlutterMap(
-                  options: MapOptions(
-                    initialCenter: _milanCenter,
-                    initialZoom: 13,
-                  ),
-                  children: [
-                    TileLayer(
-                      urlTemplate:
-                          'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
-                      subdomains: const ['a', 'b', 'c', 'd'],
-                      userAgentPackageName: 'com.example.urbanquest',
+        appBar: AppBar(
+          title: const Text('Map'),
+        ),
+        body: _isLoading
+            ? const Center(child: CircularProgressIndicator())
+            : Stack(
+                children: [
+                  FlutterMap(
+                    mapController: _mapController,
+                    options: MapOptions(
+                      initialCenter: _milanCenter,
+                      initialZoom: 13,
+                      minZoom: 10,
+                      maxZoom: 18,
                     ),
-                    if (_userPosition != null)
-                      MarkerLayer(
-                        markers: [
-                          Marker(
-                            point: LatLng(
-                              _userPosition!.latitude,
-                              _userPosition!.longitude,
-                            ),
-                            width: 30,
-                            height: 30,
-                            child: const Icon(
-                              Icons.my_location,
-                              color: Colors.blue,
-                              size: 24,
-                            ),
-                          ),
-                        ],
+                    children: [
+                      TileLayer(
+                        urlTemplate:
+                            'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
+                        subdomains: const ['a', 'b', 'c', 'd'],
+                        userAgentPackageName: 'com.example.urbanquest',
                       ),
-                    MarkerLayer(
-                      markers: _pois.map(_buildMarker).toList(),
+                      if (_userPosition != null)
+                        MarkerLayer(
+                          markers: [
+                            Marker(
+                              point: LatLng(
+                                _userPosition!.latitude,
+                                _userPosition!.longitude,
+                              ),
+                              width: 30,
+                              height: 30,
+                              child: const Icon(
+                                Icons.my_location,
+                                color: Colors.blue,
+                                size: 24,
+                              ),
+                            ),
+                          ],
+                        ),
+                      MarkerLayer(
+                        markers: _pois.map(_buildMarker).toList(),
+                      ),
+                    ],
+                  ),
+                  _buildMapProgress(),
+                  Positioned(
+                    right: 16,
+                    bottom: 120,
+                    child: Column(
+                      children: [
+                        FloatingActionButton(
+                          heroTag: 'zoom_in',
+                          mini: true,
+                          onPressed: () {
+                            _mapController.move(
+                              _mapController.camera.center,
+                              _mapController.camera.zoom + 1,
+                            );
+                          },
+                          child: const Icon(Icons.add),
+                        ),
+                        const SizedBox(height: 8),
+                        FloatingActionButton(
+                          heroTag: 'zoom_out',
+                          mini: true,
+                          onPressed: () {
+                            _mapController.move(
+                              _mapController.camera.center,
+                              _mapController.camera.zoom - 1,
+                            );
+                          },
+                          child: const Icon(Icons.remove),
+                        ),
+                      ],
                     ),
-                  ],
-                ),
-                _buildMapProgress(),
-              ],
-            ),
-    );
+                  ),
+                ],
+              ));
   }
 
   Widget _buildMapProgress() {
-  return Positioned(
-    left: 16,
-    right: 16,
-    bottom: 24,
-    child: ExplorationProgress(
-      visited: _visitedPoiIds.length,
-      total: _pois.length,
-      compact: true,
-    ),
-  );
-}
-
+    return Positioned(
+      left: 16,
+      right: 16,
+      bottom: 24,
+      child: ExplorationProgress(
+        visited: _visitedPoiIds.length,
+        total: _pois.length,
+        compact: true,
+      ),
+    );
+  }
 
   Marker _buildMarker(Poi poi) {
     final isVisited = _visitedPoiIds.contains(poi.id);
