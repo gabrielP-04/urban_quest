@@ -11,7 +11,6 @@ import 'package:urban_quest/services/active_route_storage.dart';
 import 'package:urban_quest/services/custom_route_storage.dart';
 import 'package:urban_quest/services/location_service.dart';
 import 'package:urban_quest/services/poi_service.dart';
-import 'package:urban_quest/services/route_service.dart';
 import 'package:urban_quest/services/routing_service.dart';
 import 'package:urban_quest/services/visited_poi_storage.dart';
 import 'package:urban_quest/widgets/exploration_progress.dart';
@@ -62,14 +61,9 @@ class _MapScreenState extends State<MapScreen> {
     return _activeRoute!.pois.length;
   }
 
-  double get _progressPercent =>
-      _totalPois == 0 ? 0 : _visitedCount / _totalPois;
-
   final MapController _mapController = MapController();
 
   StreamSubscription<Position>? _positionSub;
-
-  RouteModel? _currentRoute;
 
   List<RouteModel> _availableRoutes = [];
 
@@ -124,13 +118,14 @@ class _MapScreenState extends State<MapScreen> {
       builder: (_) => RouteListSheet(
         routes: _availableRoutes,
         onSelect: (route) async {
+
           setState(() {
             _activeRoute = route;
           });
 
-          await ActiveRouteStorage.saveActiveRouteId(route.id);
           await _buildRealRoute(route);
 
+          await ActiveRouteStorage.saveActiveRouteId(route.id);
           WidgetsBinding.instance.addPostFrameCallback((_) {
             _centerMapOnRoute(route);
           });
@@ -234,29 +229,28 @@ class _MapScreenState extends State<MapScreen> {
 
   Future<void> _loadPois() async {
     final pois = await PoiService.loadPois();
-    final routes = PredefinedRoutes.build(pois);
+    final predefinedRoutes = PredefinedRoutes.build(pois);
+    final customRoutes = await CustomRouteStorage.loadRoutes(pois);
     final savedRouteId = await ActiveRouteStorage.loadActiveRouteId();
 
     RouteModel? restoredRoute;
 
     if (savedRouteId != null) {
-      restoredRoute = routes.firstWhere(
+      final allRoutes = [...predefinedRoutes, ...customRoutes];
+
+      final found = allRoutes.firstWhere(
         (r) => r.id == savedRouteId,
-        orElse: () => routes.first,
+        orElse: () => allRoutes.first,
       );
+
+      restoredRoute = found;
+
     }
-
-    final customRoutes = await CustomRouteStorage.loadRoutes(pois);
-
-    _availableRoutes = [
-      ...routes,
-      ...customRoutes,
-    ];
 
     setState(() {
       _pois = pois;
       _availableRoutes = [
-        ...routes,
+        ...predefinedRoutes,
         ...customRoutes,
       ];
       _activeRoute = restoredRoute;
@@ -266,20 +260,8 @@ class _MapScreenState extends State<MapScreen> {
     if (restoredRoute != null) {
       WidgetsBinding.instance.addPostFrameCallback((_) async {
         await _buildRealRoute(restoredRoute!);
-        _centerMapOnRoute(restoredRoute);
+        _centerMapOnRoute(restoredRoute!);
       });
-    }
-  }
-
-  Future<void> _loadUserLocation() async {
-    try {
-      final position = await LocationService.getCurrentPosition();
-      setState(() {
-        _userPosition = position;
-      });
-      _checkNearbyPoi();
-    } catch (e) {
-      debugPrint(e.toString());
     }
   }
 
@@ -298,9 +280,12 @@ class _MapScreenState extends State<MapScreen> {
       _routeDurationSeconds = 0;
     });
 
-    for (int i = 0; i < route.pois.length - 1; i++) {
-      final start = LatLng(route.pois[i].lat, route.pois[i].lng);
-      final end = LatLng(route.pois[i + 1].lat, route.pois[i + 1].lng);
+    // 👇 AQUÍ está la clave
+    final orderedPois = _optimizePoisOrder(route.pois);
+
+    for (int i = 0; i < orderedPois.length - 1; i++) {
+      final start = LatLng(orderedPois[i].lat, orderedPois[i].lng);
+      final end = LatLng(orderedPois[i + 1].lat, orderedPois[i + 1].lng);
 
       final segment = await RoutingService.getRoute(start, end);
 
@@ -556,18 +541,10 @@ class _MapScreenState extends State<MapScreen> {
     );
   }
 
-  void _togglePoiInCustomRoute(Poi poi) {
-    setState(() {
-      if (_selectedPois.any((p) => p.id == poi.id)) {
-        _selectedPois.removeWhere((p) => p.id == poi.id);
-      } else {
-        _selectedPois.add(poi);
-      }
-    });
-  }
+  List<Poi> _optimizePoisOrder(List<Poi> pois) {
+    if (pois.isEmpty) return [];
 
-  List<Poi> _generateOptimizedRoute() {
-    final remaining = List<Poi>.from(_selectedPois);
+    final remaining = List<Poi>.from(pois);
     final ordered = <Poi>[];
 
     double currentLat;
@@ -613,7 +590,7 @@ class _MapScreenState extends State<MapScreen> {
   Future<void> _generateAndSaveRoute() async {
     if (_selectedPois.length < 2) return;
 
-    final orderedPois = _generateOptimizedRoute();
+    final orderedPois = _optimizePoisOrder(_selectedPois);
     final controller = TextEditingController();
 
     showDialog(
@@ -664,59 +641,6 @@ class _MapScreenState extends State<MapScreen> {
               Navigator.pop(context);
             },
             child: const Text('Generate'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _saveCustomRoute() async {
-    if (_selectedPois.length < 2) return;
-
-    final controller = TextEditingController();
-
-    showDialog(
-      context: context,
-      builder: (_) => AlertDialog(
-        title: const Text('Route name'),
-        content: TextField(
-          controller: controller,
-          decoration: const InputDecoration(
-            hintText: 'My custom route',
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () async {
-              final name = controller.text.trim();
-              if (name.isEmpty) return;
-
-              final route = RouteModel(
-                id: DateTime.now().millisecondsSinceEpoch.toString(),
-                name: name,
-                type: RouteType.cultural,
-                isCustom: true,
-                pois: List.from(_selectedPois),
-              );
-
-              _availableRoutes.add(route);
-              await CustomRouteStorage.saveRoutes(
-                _availableRoutes.where((r) => r.isCustom).toList(),
-              );
-
-              setState(() {
-                _isCreatingRoute = false;
-                _selectedPois.clear();
-                _activeRoute = route;
-              });
-
-              Navigator.pop(context);
-            },
-            child: const Text('Save'),
           ),
         ],
       ),
