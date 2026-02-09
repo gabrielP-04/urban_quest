@@ -33,7 +33,7 @@ class HomeScreen extends StatelessWidget {
           ),
         ),
       ),
-      bottomNavigationBar: const _BottomNav(currentIndex: 0),
+      
     );
   }
 }
@@ -355,34 +355,5 @@ class _RecommendationCard extends StatelessWidget {
       ),
     );
   }
-}
 
-class _BottomNav extends StatelessWidget {
-  final int currentIndex;
-  const _BottomNav({required this.currentIndex});
-
-  @override
-  Widget build(BuildContext context) {
-    return BottomNavigationBar(
-      currentIndex: currentIndex,
-      selectedItemColor: Colors.deepOrange,
-      unselectedItemColor: Colors.grey,
-      type: BottomNavigationBarType.fixed,
-      items: const [
-        BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Inicio'),
-        BottomNavigationBarItem(icon: Icon(Icons.map), label: 'Mapa'),
-        BottomNavigationBarItem(icon: Icon(Icons.emoji_events), label: 'Progreso'),
-        BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Perfil'),
-      ],
-      onTap: (index) {
-        if (index == 1) {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => const MapScreen()),
-          );
-        }
-        // Progreso y Perfil los conectamos después
-      },
-    );
-  }
 }
