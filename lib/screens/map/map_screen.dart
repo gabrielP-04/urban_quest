@@ -8,6 +8,7 @@ import 'package:urban_quest/core/utils/predefined_routes.dart';
 import 'package:urban_quest/models/poi.dart';
 import 'package:urban_quest/models/route.dart';
 import 'package:urban_quest/services/active_route_storage.dart';
+import 'package:urban_quest/services/custom_route_storage.dart';
 import 'package:urban_quest/services/location_service.dart';
 import 'package:urban_quest/services/poi_service.dart';
 import 'package:urban_quest/services/route_service.dart';
@@ -75,6 +76,13 @@ class _MapScreenState extends State<MapScreen> {
     if (_activeRoute == null) return true;
 
     return _activeRoute!.pois.any((p) => p.id == poi.id);
+  }
+
+  bool _isCreatingRoute = false;
+  List<Poi> _selectedPois = [];
+
+  bool _isPoiSelected(Poi poi) {
+    return _selectedPois.any((p) => p.id == poi.id);
   }
 
   @override
@@ -165,6 +173,13 @@ class _MapScreenState extends State<MapScreen> {
         orElse: () => routes.first,
       );
     }
+
+    final customRoutes = await CustomRouteStorage.loadRoutes(pois);
+
+    _availableRoutes = [
+      ...routes,
+      ...customRoutes,
+    ];
 
     setState(() {
       _pois = pois;
@@ -301,6 +316,24 @@ class _MapScreenState extends State<MapScreen> {
                           onPressed: _openRouteList,
                           child: const Icon(Icons.alt_route),
                         ),
+                        FloatingActionButton(
+                          heroTag: 'create_route',
+                          backgroundColor: Colors.blueAccent,
+                          onPressed: () {
+                            setState(() {
+                              _isCreatingRoute = true;
+                              _selectedPois.clear();
+                            });
+                          },
+                          child: const Icon(Icons.edit_location_alt),
+                        ),
+                        if (_isCreatingRoute)
+                          FloatingActionButton(
+                            heroTag: 'save_route',
+                            backgroundColor: Colors.green,
+                            onPressed: _saveCustomRoute,
+                            child: const Icon(Icons.check),
+                          ),
                       ],
                     ),
                   ),
@@ -325,24 +358,29 @@ class _MapScreenState extends State<MapScreen> {
     final isVisited = _visitedPoiIds.contains(poi.id);
     final isNearby = _nearbyPoi?.id == poi.id;
     final isInRoute = _poiIsInActiveRoute(poi);
+    final isSelected = _isPoiSelected(poi);
 
     return Marker(
       point: LatLng(poi.lat, poi.lng),
       width: 60,
       height: 60,
       child: GestureDetector(
-        onTap: isInRoute || _activeRoute == null
-            ? () => _showPoiDialog(poi)
-            : null,
+        onTap: () => _showPoiDialog(poi),
         child: Opacity(
           opacity: isInRoute ? 1.0 : 0.35,
           child: PoiMarker(
-            icon: isVisited ? Icons.check : _iconForCategory(poi.category),
-            color: isVisited
-                ? Colors.grey
-                : isInRoute
-                    ? _colorForCategory(poi.category)
-                    : Colors.grey,
+            icon: isSelected
+                ? Icons.star
+                : isVisited
+                    ? Icons.check
+                    : _iconForCategory(poi.category),
+            color: isSelected
+                ? const Color.fromARGB(255, 219, 52, 52)
+                : isVisited
+                    ? Colors.grey
+                    : isInRoute
+                        ? _colorForCategory(poi.category)
+                        : Colors.grey,
             isActive: isNearby && isInRoute,
           ),
         ),
@@ -431,6 +469,136 @@ class _MapScreenState extends State<MapScreen> {
     );
   }
 
+  void _togglePoiInCustomRoute(Poi poi) {
+    setState(() {
+      if (_selectedPois.any((p) => p.id == poi.id)) {
+        _selectedPois.removeWhere((p) => p.id == poi.id);
+      } else {
+        _selectedPois.add(poi);
+      }
+    });
+  }
+
+  List<Poi> _generateOptimizedRoute() {
+    final remaining = List<Poi>.from(_selectedPois);
+    final ordered = <Poi>[];
+
+    double currentLat;
+    double currentLng;
+
+    if (_userPosition != null) {
+      currentLat = _userPosition!.latitude;
+      currentLng = _userPosition!.longitude;
+    } else {
+      final first = remaining.removeAt(0);
+      ordered.add(first);
+      currentLat = first.lat;
+      currentLng = first.lng;
+    }
+
+    while (remaining.isNotEmpty) {
+      Poi nearest = remaining.first;
+      double minDistance = double.infinity;
+
+      for (final poi in remaining) {
+        final distance = Geolocator.distanceBetween(
+          currentLat,
+          currentLng,
+          poi.lat,
+          poi.lng,
+        );
+
+        if (distance < minDistance) {
+          minDistance = distance;
+          nearest = poi;
+        }
+      }
+
+      ordered.add(nearest);
+      remaining.remove(nearest);
+      currentLat = nearest.lat;
+      currentLng = nearest.lng;
+    }
+
+    return ordered;
+  }
+
+  void _generateAndSaveRoute() {
+    final orderedPois = _generateOptimizedRoute();
+
+    final route = RouteModel(
+      id: DateTime.now().millisecondsSinceEpoch.toString(),
+      name: 'My custom route',
+      type: RouteType.cultural,
+      isCustom: true,
+      pois: orderedPois,
+    );
+
+    setState(() {
+      _activeRoute = route;
+      _availableRoutes.add(route);
+      _selectedPois.clear();
+      _isCreatingRoute = false;
+    });
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _centerMapOnRoute(route);
+    });
+  }
+
+  void _saveCustomRoute() async {
+    if (_selectedPois.length < 2) return;
+
+    final controller = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text('Route name'),
+        content: TextField(
+          controller: controller,
+          decoration: const InputDecoration(
+            hintText: 'My custom route',
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              final name = controller.text.trim();
+              if (name.isEmpty) return;
+
+              final route = RouteModel(
+                id: DateTime.now().millisecondsSinceEpoch.toString(),
+                name: name,
+                type: RouteType.cultural,
+                isCustom: true,
+                pois: List.from(_selectedPois),
+              );
+
+              _availableRoutes.add(route);
+              await CustomRouteStorage.saveRoutes(
+                _availableRoutes.where((r) => r.isCustom).toList(),
+              );
+
+              setState(() {
+                _isCreatingRoute = false;
+                _selectedPois.clear();
+                _activeRoute = route;
+              });
+
+              Navigator.pop(context);
+            },
+            child: const Text('Save'),
+          ),
+        ],
+      ),
+    );
+  }
+
   void _clearActiveRoute() async {
     setState(() {
       _activeRoute = null;
@@ -442,6 +610,7 @@ class _MapScreenState extends State<MapScreen> {
   void _showPoiDialog(Poi poi) {
     final isNearby = _nearbyPoi?.id == poi.id;
     final isVisited = _visitedPoiIds.contains(poi.id);
+    final isSelected = _isPoiSelected(poi);
 
     showDialog(
       context: context,
@@ -478,6 +647,24 @@ class _MapScreenState extends State<MapScreen> {
               },
               child: const Text('Mark as visited'),
             ),
+          TextButton(
+            onPressed: () {
+              setState(() {
+                _isCreatingRoute = true;
+
+                if (isSelected) {
+                  _selectedPois.removeWhere((p) => p.id == poi.id);
+                } else {
+                  _selectedPois.add(poi);
+                }
+              });
+
+              Navigator.pop(context);
+            },
+            child: Text(
+              isSelected ? 'Remove from route' : 'Add to route',
+            ),
+          ),
         ],
       ),
     );

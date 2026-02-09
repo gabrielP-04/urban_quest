@@ -12,11 +12,16 @@ class RouteModel {
   final String name;
   final RouteType type;
   final List<Poi> pois;
+  final bool isCustom;
 
   RouteModel({
     required this.id,
     required this.name,
     required this.type,
     required this.pois,
+    this.isCustom = false,
   });
 }
+
+
+
