@@ -1,10 +1,84 @@
 import 'package:flutter/material.dart';
 import '../../services/auth_service.dart';
-import '../../services/firestore_service.dart';
-import '../../models/user_profile.dart';
 
 class AccountSecurityScreen extends StatelessWidget {
   const AccountSecurityScreen({Key? key}) : super(key: key);
+
+  @override
+  State<AccountSecurityScreen> createState() => _AccountSecurityScreenState();
+}
+
+class _AccountSecurityScreenState extends State<AccountSecurityScreen> {
+  final _authService = AuthService();
+
+  String? get _email => _authService.currentUserEmail;
+
+  Future<void> _changeEmail(
+    BuildContext context,
+    String newEmail,
+    String password,
+  ) async {
+    try {
+      await _authService.changeEmail(
+        newEmail: newEmail,
+        password: password,
+      );
+
+      if (context.mounted) {
+        Navigator.pop(context);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Verification email sent! Please check your inbox and verify your new email address.',
+            ),
+            backgroundColor: Colors.orange,
+            duration: Duration(seconds: 5),
+          ),
+        );
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(e.toString()),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _changePassword(
+    BuildContext context,
+    String currentPassword,
+    String newPassword,
+  ) async {
+    try {
+      await _authService.changePassword(
+        currentPassword: currentPassword,
+        newPassword: newPassword,
+      );
+
+      if (context.mounted) {
+        Navigator.pop(context);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Password updated successfully'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(e.toString()),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -82,7 +156,7 @@ class AccountSecurityScreen extends StatelessWidget {
                     subtitle: 'Password',
                     trailing: TextButton(
                       onPressed: () {
-                        _showChangePasswordDialog(context, authService);
+                        _showChangePasswordDialog(context);
                       },
                       child: const Text(
                         'Change',
@@ -93,7 +167,7 @@ class AccountSecurityScreen extends StatelessWidget {
                       ),
                     ),
                     onTap: () {
-                      _showChangePasswordDialog(context, authService);
+                      _showChangePasswordDialog(context);
                     },
                     isLast: true,
                   ),
@@ -118,7 +192,7 @@ class AccountSecurityScreen extends StatelessWidget {
                 ],
               ),
               child: InkWell(
-                onTap: () => _showDeleteAccountDialog(context, authService),
+                onTap: () => _showDeleteAccountDialog(context),
                 borderRadius: BorderRadius.circular(20),
                 child: Padding(
                   padding: const EdgeInsets.all(20),
@@ -231,31 +305,104 @@ class AccountSecurityScreen extends StatelessWidget {
   }
 
   // Show Email Info Dialog
-  void _showEmailDialog(BuildContext context, String? email) {
+  void _showEmailDialog(BuildContext context, String? currentEmail) {
+    final emailController = TextEditingController();
+    final passwordController = TextEditingController();
+
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text('Email'),
+        title: const Text('Change Email'),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              email ?? 'No email found',
-              style: const TextStyle(fontSize: 16),
+            const Text(
+              'Enter your new email address. You will need to verify it before the change takes effect.',
+              style: TextStyle(fontSize: 13, color: Colors.grey),
             ),
             const SizedBox(height: 16),
-            const Text(
-              'Email cannot be changed. Contact support if needed.',
-              style: TextStyle(fontSize: 14, color: Colors.grey),
+            Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(10),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.10),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: TextField(
+                controller: emailController,
+                keyboardType: TextInputType.emailAddress,
+                decoration: InputDecoration(
+                  labelText: 'New email',
+                  hint: currentEmail != null
+                      ? Text(currentEmail)
+                      : const Text(""),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: BorderSide.none,
+                  ),
+                  prefixIcon: const Icon(Icons.email),
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
+            Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(10),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.10),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: TextField(
+                controller: passwordController,
+                obscureText: true,
+                decoration: InputDecoration(
+                  labelText: 'Current password',
+                  prefixIcon: const Icon(Icons.lock),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: BorderSide.none,
+                  ),
+                ),
+              ),
             ),
           ],
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('OK', style: TextStyle(color: Colors.deepOrange)),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () async {
+              final newEmail = emailController.text.trim();
+              final password = passwordController.text;
+
+              if (newEmail.isEmpty || password.isEmpty) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Please fill all fields'),
+                    backgroundColor: Colors.red,
+                  ),
+                );
+                return;
+              }
+
+              await _changeEmail(context, newEmail, password);
+            },
+            child: const Text(
+              'Send Verification',
+              style: TextStyle(color: Colors.deepOrange),
+            ),
           ),
         ],
       ),
@@ -263,41 +410,148 @@ class AccountSecurityScreen extends StatelessWidget {
   }
 
   // Show Change Password Dialog
-  void _showChangePasswordDialog(
-      BuildContext context, AuthService authService) {
+  void _showChangePasswordDialog(BuildContext context) {
+    final currentPasswordController = TextEditingController();
+    final newPasswordController = TextEditingController();
+    final confirmPasswordController = TextEditingController();
+    bool obscureCurrent = true;
+    bool obscureNew = true;
+    bool obscureConfirm = true;
+
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text('Change Password'),
-        content: const Text(
-          'Password reset functionality coming soon!\n\nYou will receive a password reset email.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel', style: TextStyle(color: Colors.grey)),
-          ),
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Password reset email sent!'),
-                  backgroundColor: Colors.green,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setState) => AlertDialog(
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          title: const Text('Change Password'),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  controller: currentPasswordController,
+                  obscureText: obscureCurrent,
+                  decoration: InputDecoration(
+                    labelText: 'Current password',
+                    border: const OutlineInputBorder(),
+                    prefixIcon: const Icon(Icons.lock_outline),
+                    suffixIcon: IconButton(
+                      icon: Icon(
+                        obscureCurrent
+                            ? Icons.visibility_off
+                            : Icons.visibility,
+                      ),
+                      onPressed: () {
+                        setState(() => obscureCurrent = !obscureCurrent);
+                      },
+                    ),
+                  ),
                 ),
-              );
-            },
-            child: const Text('Send Email',
-                style: TextStyle(color: Colors.deepOrange)),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: newPasswordController,
+                  obscureText: obscureNew,
+                  decoration: InputDecoration(
+                    labelText: 'New password',
+                    border: const OutlineInputBorder(),
+                    prefixIcon: const Icon(Icons.lock),
+                    suffixIcon: IconButton(
+                      icon: Icon(
+                        obscureNew ? Icons.visibility_off : Icons.visibility,
+                      ),
+                      onPressed: () {
+                        setState(() => obscureNew = !obscureNew);
+                      },
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: confirmPasswordController,
+                  obscureText: obscureConfirm,
+                  decoration: InputDecoration(
+                    labelText: 'Confirm new password',
+                    border: const OutlineInputBorder(),
+                    prefixIcon: const Icon(Icons.lock),
+                    suffixIcon: IconButton(
+                      icon: Icon(
+                        obscureConfirm
+                            ? Icons.visibility_off
+                            : Icons.visibility,
+                      ),
+                      onPressed: () {
+                        setState(() => obscureConfirm = !obscureConfirm);
+                      },
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                const Text(
+                  'Password must be at least 6 characters long.',
+                  style: TextStyle(fontSize: 12, color: Colors.grey),
+                ),
+              ],
+            ),
           ),
-        ],
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel', style: TextStyle(color: Colors.grey)),
+            ),
+            TextButton(
+              onPressed: () async {
+                final currentPassword = currentPasswordController.text;
+                final newPassword = newPasswordController.text;
+                final confirmPassword = confirmPasswordController.text;
+
+                if (currentPassword.isEmpty ||
+                    newPassword.isEmpty ||
+                    confirmPassword.isEmpty) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Please fill all fields'),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
+                  return;
+                }
+
+                if (newPassword != confirmPassword) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('New passwords do not match'),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
+                  return;
+                }
+
+                if (newPassword.length < 6) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Password must be at least 6 characters'),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
+                  return;
+                }
+
+                await _changePassword(context, currentPassword, newPassword);
+              },
+              child: const Text(
+                'Change Password',
+                style: TextStyle(color: Colors.deepOrange),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
 
   // Show Delete Account Confirmation
-  void _showDeleteAccountDialog(BuildContext context, AuthService authService) {
+  void _showDeleteAccountDialog(BuildContext context) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -317,7 +571,7 @@ class AccountSecurityScreen extends StatelessWidget {
           TextButton(
             onPressed: () async {
               try {
-                await authService.deleteAccount();
+                await _authService.deleteAccount();
                 if (context.mounted) {
                   Navigator.pop(context); // Close dialog
                   ScaffoldMessenger.of(context).showSnackBar(

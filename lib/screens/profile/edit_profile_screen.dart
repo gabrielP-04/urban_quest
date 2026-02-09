@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import '../../services/auth_service.dart';
 import '../../services/firestore_service.dart';
 import '../../models/user_profile.dart';
+import '../../core/utils/profile_assets.dart';
 
 class EditProfileScreen extends StatefulWidget {
   final UserProfile profile;
@@ -23,9 +22,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   final _firestoreService = FirestoreService();
 
   bool _isLoading = false;
-  String _selectedTitle = 'Urban Explorer';
+  late String _selectedTitle;
+  late String _selectedAvatarId;
+  late String _selectedBannerId;
 
-  // Títulos disponibles
   final List<String> _availableTitles = [
     'Urban Explorer',
     'City Wanderer',
@@ -42,7 +42,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     super.initState();
     _firstNameController.text = widget.profile.firstName;
     _lastNameController.text = widget.profile.lastName;
-    // TODO: Cargar título guardado del perfil cuando lo implementes en el modelo
+    _selectedTitle = widget.profile.profileTitle;  // ✅ Inicializar con el título del perfil
+    _selectedAvatarId = widget.profile.avatarId;
+    _selectedBannerId = widget.profile.bannerId;
   }
 
   @override
@@ -58,11 +60,13 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     setState(() => _isLoading = true);
 
     try {
-      // Actualizar perfil
       final updatedProfile = widget.profile.copyWith(
         firstName: _firstNameController.text.trim(),
         lastName: _lastNameController.text.trim(),
         displayName: '${_firstNameController.text.trim()} ${_lastNameController.text.trim()}',
+        avatarId: _selectedAvatarId,
+        bannerId: _selectedBannerId,
+        profileTitle: _selectedTitle,  // ✅ Guardar el título seleccionado
       );
 
       await _firestoreService.updateUserProfile(updatedProfile);
@@ -80,7 +84,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error updating profile: $e'),
+            content: Text('Error: $e'),
             backgroundColor: Colors.red,
           ),
         );
@@ -92,8 +96,31 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     }
   }
 
+  void _selectAvatar() async {
+    final selected = await showDialog<String>(
+      context: context,
+      builder: (context) => _AvatarPickerDialog(currentId: _selectedAvatarId),
+    );
+    if (selected != null) {
+      setState(() => _selectedAvatarId = selected);
+    }
+  }
+
+  void _selectBanner() async {
+    final selected = await showDialog<String>(
+      context: context,
+      builder: (context) => _BannerPickerDialog(currentId: _selectedBannerId),
+    );
+    if (selected != null) {
+      setState(() => _selectedBannerId = selected);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    final currentAvatar = ProfileAssets.getAvatar(_selectedAvatarId);
+    final currentBanner = ProfileAssets.getBanner(_selectedBannerId);
+
     return Scaffold(
       backgroundColor: const Color(0xFFFAF3ED),
       appBar: AppBar(
@@ -132,19 +159,12 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const SizedBox(height: 8),
+              // Banner + Avatar Section
+              _buildBannerAvatarSection(currentAvatar, currentBanner),
 
-              // Banner Section (placeholder)
-              _buildBannerSection(),
+              const SizedBox(height: 80), // Espacio para el avatar que sobresale
 
-              const SizedBox(height: 16),
-
-              // Profile Picture Section
-              _buildProfilePictureSection(),
-
-              const SizedBox(height: 32),
-
-              // Personal Info Section
+              // Personal Info
               const Padding(
                 padding: EdgeInsets.symmetric(horizontal: 20, vertical: 8),
                 child: Text(
@@ -160,7 +180,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
               _buildPersonalInfoCard(),
 
-              const SizedBox(height: 24),
+              const SizedBox(height: 60),
 
               // Title Section
               const Padding(
@@ -186,73 +206,103 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     );
   }
 
-  // Banner Section
-  Widget _buildBannerSection() {
+  Widget _buildBannerAvatarSection(AvatarOption avatar, BannerOption banner) {
     return Stack(
+      clipBehavior: Clip.none,
       children: [
-        // Banner placeholder
-        Container(
-          height: 160,
-          margin: const EdgeInsets.symmetric(horizontal: 16),
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [
-                Colors.deepOrange.shade200,
-                Colors.orange.shade200,
+        // Banner
+        InkWell(
+          onTap: _selectBanner,
+          child: Container(
+            height: 180,
+            margin: const EdgeInsets.symmetric(horizontal: 16),
+            decoration: BoxDecoration(
+              gradient: banner.gradient,
+              borderRadius: BorderRadius.circular(20),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.1),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
+                ),
               ],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
             ),
-            borderRadius: BorderRadius.circular(20),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.05),
-                blurRadius: 10,
-                offset: const Offset(0, 4),
-              ),
-            ],
-          ),
-          child: Center(
-            child: Icon(
-              Icons.landscape_outlined,
-              size: 64,
-              color: Colors.white.withOpacity(0.5),
+            child: Stack(
+              children: [
+                // Edit button banner
+                Positioned(
+                  right: 12,
+                  top: 12,
+                  child: Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: Colors.black.withOpacity(0.3),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: const Icon(
+                      Icons.camera_alt,
+                      size: 20,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
         ),
 
-        // Edit button
+        // Avatar
         Positioned(
-          right: 28,
-          bottom: 12,
-          child: Material(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(12),
+          bottom: -50,
+          left: 0,
+          right: 0,
+          child: Center(
             child: InkWell(
-              onTap: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Banner upload coming soon!'),
-                  ),
-                );
-              },
-              borderRadius: BorderRadius.circular(12),
+              onTap: _selectAvatar,
               child: Container(
-                padding: const EdgeInsets.all(10),
+                width: 120,
+                height: 120,
                 decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(12),
+                  color: avatar.color,
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: const Color(0xFFFAF3ED),
+                    width: 6,
+                  ),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.1),
-                      blurRadius: 8,
-                      offset: const Offset(0, 2),
+                      color: Colors.black.withOpacity(0.15),
+                      blurRadius: 15,
+                      offset: const Offset(0, 5),
                     ),
                   ],
                 ),
-                child: const Icon(
-                  Icons.camera_alt,
-                  size: 20,
-                  color: Colors.deepOrange,
+                child: Stack(
+                  children: [
+                    Center(
+                      child: Text(
+                        avatar.emoji,
+                        style: const TextStyle(fontSize: 56),
+                      ),
+                    ),
+                    // Edit button avatar
+                    Positioned(
+                      right: 4,
+                      bottom: 4,
+                      child: Container(
+                        padding: const EdgeInsets.all(6),
+                        decoration: BoxDecoration(
+                          color: Colors.deepOrange,
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(
+                          Icons.edit,
+                          size: 16,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),
@@ -262,73 +312,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     );
   }
 
-  // Profile Picture Section
-  Widget _buildProfilePictureSection() {
-    return Center(
-      child: Stack(
-        children: [
-          // Avatar
-          Container(
-            width: 100,
-            height: 100,
-            decoration: BoxDecoration(
-              color: Colors.white,
-              shape: BoxShape.circle,
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.1),
-                  blurRadius: 12,
-                  offset: const Offset(0, 4),
-                ),
-              ],
-            ),
-            child: Center(
-              child: Text(
-                widget.profile.firstName.isNotEmpty
-                    ? widget.profile.firstName[0].toUpperCase()
-                    : '?',
-                style: const TextStyle(
-                  fontSize: 40,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.deepOrange,
-                ),
-              ),
-            ),
-          ),
-
-          // Edit button
-          Positioned(
-            right: 0,
-            bottom: 0,
-            child: Material(
-              color: Colors.deepOrange,
-              borderRadius: BorderRadius.circular(10),
-              child: InkWell(
-                onTap: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Profile picture upload coming soon!'),
-                    ),
-                  );
-                },
-                borderRadius: BorderRadius.circular(10),
-                child: Container(
-                  padding: const EdgeInsets.all(8),
-                  child: const Icon(
-                    Icons.camera_alt,
-                    size: 18,
-                    color: Colors.white,
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // Personal Info Card
   Widget _buildPersonalInfoCard() {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16),
@@ -346,7 +329,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       ),
       child: Column(
         children: [
-          // First Name
           TextFormField(
             controller: _firstNameController,
             textCapitalization: TextCapitalization.words,
@@ -356,27 +338,16 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
               prefixIcon: const Icon(Icons.person_outline, color: Colors.deepOrange),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide(color: Colors.grey.shade300),
-              ),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide(color: Colors.grey.shade300),
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
                 borderSide: const BorderSide(color: Colors.deepOrange, width: 2),
               ),
             ),
-            validator: (value) {
-              if (value == null || value.trim().isEmpty) {
-                return 'Please enter your first name';
-              }
-              return null;
-            },
+            validator: (value) =>
+                value?.trim().isEmpty ?? true ? 'Enter your first name' : null,
           ),
           const SizedBox(height: 16),
-
-          // Last Name
           TextFormField(
             controller: _lastNameController,
             textCapitalization: TextCapitalization.words,
@@ -386,41 +357,24 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
               prefixIcon: const Icon(Icons.person_outline, color: Colors.deepOrange),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide(color: Colors.grey.shade300),
-              ),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide(color: Colors.grey.shade300),
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
                 borderSide: const BorderSide(color: Colors.deepOrange, width: 2),
               ),
             ),
-            validator: (value) {
-              if (value == null || value.trim().isEmpty) {
-                return 'Please enter your last name';
-              }
-              return null;
-            },
+            validator: (value) =>
+                value?.trim().isEmpty ?? true ? 'Enter your last name' : null,
           ),
           const SizedBox(height: 16),
-
-          // Username (read-only)
           TextFormField(
             initialValue: '@${widget.profile.username}',
             enabled: false,
             decoration: InputDecoration(
               labelText: 'Username',
-              labelStyle: const TextStyle(color: Color(0xFF9E9E9E)),
               prefixIcon: const Icon(Icons.alternate_email, color: Colors.grey),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide(color: Colors.grey.shade300),
-              ),
-              disabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide(color: Colors.grey.shade300),
               ),
               filled: true,
               fillColor: Colors.grey.shade100,
@@ -431,7 +385,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     );
   }
 
-  // Title Selection Card
   Widget _buildTitleCard() {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16),
@@ -458,17 +411,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
               color: Color(0xFF5A5A5A),
             ),
           ),
-          const SizedBox(height: 4),
-          const Text(
-            'This will be displayed on your profile',
-            style: TextStyle(
-              fontSize: 13,
-              color: Color(0xFF9E9E9E),
-            ),
-          ),
           const SizedBox(height: 16),
-
-          // Title chips
           Wrap(
             spacing: 8,
             runSpacing: 8,
@@ -477,25 +420,124 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
               return ChoiceChip(
                 label: Text(title),
                 selected: isSelected,
-                onSelected: (selected) {
-                  setState(() {
-                    _selectedTitle = title;
-                  });
-                },
+                onSelected: (selected) => setState(() => _selectedTitle = title),
                 selectedColor: Colors.deepOrange.shade100,
-                backgroundColor: Colors.grey.shade100,
                 labelStyle: TextStyle(
                   color: isSelected ? Colors.deepOrange : const Color(0xFF5A5A5A),
                   fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-                ),
-                side: BorderSide(
-                  color: isSelected ? Colors.deepOrange : Colors.grey.shade300,
-                  width: isSelected ? 2 : 1,
                 ),
               );
             }).toList(),
           ),
         ],
+      ),
+    );
+  }
+}
+
+// Avatar Picker Dialog
+class _AvatarPickerDialog extends StatelessWidget {
+  final String currentId;
+
+  const _AvatarPickerDialog({required this.currentId});
+
+  @override
+  Widget build(BuildContext context) {
+    return Dialog(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text(
+              'Choose Avatar',
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 20),
+            GridView.builder(
+              shrinkWrap: true,
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 4,
+                mainAxisSpacing: 12,
+                crossAxisSpacing: 12,
+              ),
+              itemCount: ProfileAssets.avatars.length,
+              itemBuilder: (context, index) {
+                final avatar = ProfileAssets.avatars[index];
+                final isSelected = avatar.id == currentId;
+                return GestureDetector(
+                  onTap: () => Navigator.pop(context, avatar.id),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: avatar.color,
+                      shape: BoxShape.circle,
+                      border: isSelected
+                          ? Border.all(color: Colors.deepOrange, width: 3)
+                          : null,
+                    ),
+                    child: Center(
+                      child: Text(avatar.emoji, style: const TextStyle(fontSize: 32)),
+                    ),
+                  ),
+                );
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// Banner Picker Dialog
+class _BannerPickerDialog extends StatelessWidget {
+  final String currentId;
+
+  const _BannerPickerDialog({required this.currentId});
+
+  @override
+  Widget build(BuildContext context) {
+    return Dialog(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text(
+              'Choose Banner',
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 20),
+            GridView.builder(
+              shrinkWrap: true,
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 2,
+                mainAxisSpacing: 12,
+                crossAxisSpacing: 12,
+                childAspectRatio: 2,
+              ),
+              itemCount: ProfileAssets.banners.length,
+              itemBuilder: (context, index) {
+                final banner = ProfileAssets.banners[index];
+                final isSelected = banner.id == currentId;
+                return GestureDetector(
+                  onTap: () => Navigator.pop(context, banner.id),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      gradient: banner.gradient,
+                      borderRadius: BorderRadius.circular(12),
+                      border: isSelected
+                          ? Border.all(color: Colors.deepOrange, width: 3)
+                          : null,
+                    ),
+                  ),
+                );
+              },
+            ),
+          ],
+        ),
       ),
     );
   }

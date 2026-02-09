@@ -1,10 +1,13 @@
 class UserProfile {
   final String userId;
   final String email;
-  final String displayName;      
-  final String username;         
-  final String firstName;        
-  final String lastName;         
+  final String displayName;
+  final String username;
+  final String firstName;
+  final String lastName;
+  final String avatarId;        // Avatar personalizado
+  final String bannerId;        // Banner personalizado
+  final String profileTitle;    // ✅ NUEVO - Título del perfil (ej: "Urban Explorer")
   final int experiencePoints;
   final List<String> visitedPoiIds;
   final List<String> completedRouteIds;
@@ -19,6 +22,9 @@ class UserProfile {
     required this.username,
     required this.firstName,
     required this.lastName,
+    this.avatarId = 'avatar_1',           // default
+    this.bannerId = 'banner_1',           // default
+    this.profileTitle = 'Urban Explorer', // ✅ NUEVO - default
     this.experiencePoints = 0,
     this.visitedPoiIds = const [],
     this.completedRouteIds = const [],
@@ -37,6 +43,9 @@ class UserProfile {
       username: data['username'] as String? ?? '',
       firstName: data['firstName'] as String? ?? '',
       lastName: data['lastName'] as String? ?? '',
+      avatarId: data['avatarId'] as String? ?? 'avatar_1',
+      bannerId: data['bannerId'] as String? ?? 'banner_1',
+      profileTitle: data['profileTitle'] as String? ?? 'Urban Explorer', // ✅ NUEVO
       experiencePoints: data['experiencePoints'] as int? ?? 0,
       visitedPoiIds: List<String>.from(data['visitedPoiIds'] ?? []),
       completedRouteIds: List<String>.from(data['completedRouteIds'] ?? []),
@@ -54,6 +63,9 @@ class UserProfile {
       'username': username,
       'firstName': firstName,
       'lastName': lastName,
+      'avatarId': avatarId,
+      'bannerId': bannerId,
+      'profileTitle': profileTitle,     // ✅ NUEVO
       'experiencePoints': experiencePoints,
       'visitedPoiIds': visitedPoiIds,
       'completedRouteIds': completedRouteIds,
@@ -71,7 +83,9 @@ class UserProfile {
     String? username,
     String? firstName,
     String? lastName,
-    String? country,
+    String? avatarId,
+    String? bannerId,
+    String? profileTitle,          // ✅ NUEVO
     int? experiencePoints,
     List<String>? visitedPoiIds,
     List<String>? completedRouteIds,
@@ -86,6 +100,9 @@ class UserProfile {
       username: username ?? this.username,
       firstName: firstName ?? this.firstName,
       lastName: lastName ?? this.lastName,
+      avatarId: avatarId ?? this.avatarId,
+      bannerId: bannerId ?? this.bannerId,
+      profileTitle: profileTitle ?? this.profileTitle,  // ✅ NUEVO
       experiencePoints: experiencePoints ?? this.experiencePoints,
       visitedPoiIds: visitedPoiIds ?? this.visitedPoiIds,
       completedRouteIds: completedRouteIds ?? this.completedRouteIds,
@@ -99,6 +116,5 @@ class UserProfile {
   int get totalRoutesCompleted => completedRouteIds.length;
   int get totalAchievements => achievementIds.length;
   
-  // NUEVO: Nombre completo
   String get fullName => '$firstName $lastName'.trim();
 }
