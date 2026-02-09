@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:urban_quest/screens/achievements/achievement_screen.dart';
 import '../../services/auth_service.dart';
 import '../../services/firestore_service.dart';
 import '../../models/user_profile.dart';
@@ -7,7 +8,6 @@ import 'account_security_screen.dart';
 import 'edit_profile_screen.dart';
 
 class ProfileScreen extends StatelessWidget {
-
   final bool showBottomNav;
 
   const ProfileScreen({
@@ -204,7 +204,8 @@ class ProfileScreen extends StatelessWidget {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => EditProfileScreen(profile: profile),
+                          builder: (context) =>
+                              EditProfileScreen(profile: profile),
                         ),
                       );
                     },
@@ -266,7 +267,8 @@ class ProfileScreen extends StatelessWidget {
 
                 // Badge de título con icono
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                   decoration: BoxDecoration(
                     color: Colors.deepOrange.shade50,
                     borderRadius: BorderRadius.circular(20),
@@ -277,7 +279,8 @@ class ProfileScreen extends StatelessWidget {
                       const Text('🇮🇹', style: TextStyle(fontSize: 16)),
                       const SizedBox(width: 8),
                       Text(
-                        profile.profileTitle, // ✅ Mostrar el título personalizado del usuario
+                        profile
+                            .profileTitle, // ✅ Mostrar el título personalizado del usuario
                         style: TextStyle(
                           fontSize: 14,
                           color: Colors.deepOrange.shade700,
@@ -334,7 +337,8 @@ class ProfileScreen extends StatelessWidget {
                 ),
               ),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 decoration: BoxDecoration(
                   gradient: const LinearGradient(
                     colors: [Color(0xFFFF9A56), Color(0xFFFF7A3D)],
@@ -386,7 +390,8 @@ class ProfileScreen extends StatelessWidget {
                   value: progressPercent,
                   minHeight: 12,
                   backgroundColor: Colors.grey.shade200,
-                  valueColor: const AlwaysStoppedAnimation<Color>(Colors.deepOrange),
+                  valueColor:
+                      const AlwaysStoppedAnimation<Color>(Colors.deepOrange),
                 ),
               ),
             ],
@@ -490,8 +495,13 @@ class ProfileScreen extends StatelessWidget {
             title: 'Achievements',
             subtitle: '${profile.totalAchievements} badges earned',
             onTap: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Achievements coming soon!')),
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => AchievementsScreen(
+                    achievements: mockAchievements,
+                  ),
+                ),
               );
             },
             isFirst: true,
