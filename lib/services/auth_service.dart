@@ -1,4 +1,5 @@
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:urban_quest/services/visited_poi_storage.dart';
 
 class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
@@ -53,6 +54,7 @@ class AuthService {
   /// Cerrar sesión
   Future<void> signOut() async {
     try {
+      await VisitedPoiStorage.clearVisitedPoiIds(userId: currentUserId);
       await _auth.signOut();
     } catch (e) {
       throw 'Could not sign out: $e';

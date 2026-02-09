@@ -5,9 +5,9 @@ class UserProfile {
   final String username;
   final String firstName;
   final String lastName;
-  final String avatarId;        // Avatar personalizado
-  final String bannerId;        // Banner personalizado
-  final String profileTitle;    // ✅ NUEVO - Título del perfil (ej: "Urban Explorer")
+  final String avatarId;       
+  final String bannerId;        
+  final String profileTitle;    
   final int experiencePoints;
   final List<String> visitedPoiIds;
   final List<String> completedRouteIds;
@@ -24,7 +24,7 @@ class UserProfile {
     required this.lastName,
     this.avatarId = 'avatar_1',           // default
     this.bannerId = 'banner_1',           // default
-    this.profileTitle = 'Urban Explorer', // ✅ NUEVO - default
+    this.profileTitle = 'Urban Explorer', // default
     this.experiencePoints = 0,
     this.visitedPoiIds = const [],
     this.completedRouteIds = const [],
@@ -45,7 +45,7 @@ class UserProfile {
       lastName: data['lastName'] as String? ?? '',
       avatarId: data['avatarId'] as String? ?? 'avatar_1',
       bannerId: data['bannerId'] as String? ?? 'banner_1',
-      profileTitle: data['profileTitle'] as String? ?? 'Urban Explorer', // ✅ NUEVO
+      profileTitle: data['profileTitle'] as String? ?? 'Urban Explorer', 
       experiencePoints: data['experiencePoints'] as int? ?? 0,
       visitedPoiIds: List<String>.from(data['visitedPoiIds'] ?? []),
       completedRouteIds: List<String>.from(data['completedRouteIds'] ?? []),
@@ -65,7 +65,7 @@ class UserProfile {
       'lastName': lastName,
       'avatarId': avatarId,
       'bannerId': bannerId,
-      'profileTitle': profileTitle,     // ✅ NUEVO
+      'profileTitle': profileTitle,     
       'experiencePoints': experiencePoints,
       'visitedPoiIds': visitedPoiIds,
       'completedRouteIds': completedRouteIds,
@@ -85,7 +85,7 @@ class UserProfile {
     String? lastName,
     String? avatarId,
     String? bannerId,
-    String? profileTitle,          // ✅ NUEVO
+    String? profileTitle,          
     int? experiencePoints,
     List<String>? visitedPoiIds,
     List<String>? completedRouteIds,
@@ -102,7 +102,7 @@ class UserProfile {
       lastName: lastName ?? this.lastName,
       avatarId: avatarId ?? this.avatarId,
       bannerId: bannerId ?? this.bannerId,
-      profileTitle: profileTitle ?? this.profileTitle,  // ✅ NUEVO
+      profileTitle: profileTitle ?? this.profileTitle,  
       experiencePoints: experiencePoints ?? this.experiencePoints,
       visitedPoiIds: visitedPoiIds ?? this.visitedPoiIds,
       completedRouteIds: completedRouteIds ?? this.completedRouteIds,
