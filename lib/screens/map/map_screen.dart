@@ -118,7 +118,6 @@ class _MapScreenState extends State<MapScreen> {
       builder: (_) => RouteListSheet(
         routes: _availableRoutes,
         onSelect: (route) async {
-
           setState(() {
             _activeRoute = route;
           });
@@ -244,7 +243,6 @@ class _MapScreenState extends State<MapScreen> {
       );
 
       restoredRoute = found;
-
     }
 
     setState(() {
@@ -761,7 +759,12 @@ class _MapScreenState extends State<MapScreen> {
 
       setState(() {
         _activeRoute = null;
+        _realRoutePoints.clear();
+        _routeDistanceMeters = 0;
+        _routeDurationSeconds = 0;
       });
+
+      await ActiveRouteStorage.clearActiveRoute();
     }
 
     await VisitedPoiStorage.saveVisitedPoiIds(_visitedPoiIds);
