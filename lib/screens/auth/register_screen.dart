@@ -141,7 +141,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         Text(
                           'Create an account to start your adventure.',
                           textAlign: TextAlign.center,
-                          style: Theme.of(context).textTheme.displayMedium
+                          style: Theme.of(context).textTheme.displaySmall
                         ),
                       ],
                     ),

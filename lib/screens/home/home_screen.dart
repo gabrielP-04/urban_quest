@@ -5,14 +5,17 @@ import '../../services/firestore_service.dart';
 import '../../models/user_profile.dart';
 
 class HomeScreen extends StatelessWidget {
-  const HomeScreen({super.key});
 
-  static const _bg = Color(0xFFF6F6F6);
+  final bool showBottomNav;
+
+   const HomeScreen({
+    Key? key,
+    this.showBottomNav = true,
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: _bg,
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(16),
@@ -43,17 +46,17 @@ class _Header extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
+    return const Row(
       children: [
-        const CircleAvatar(
+         CircleAvatar(
           radius: 24,
           backgroundColor: Color(0xFFFFB74D),
           child: Icon(Icons.person, color: Colors.white),
         ),
-        const SizedBox(width: 12),
+         SizedBox(width: 12),
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
-          children: const [
+          children:  [
             Text(
               'Hola, Alex',
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
@@ -69,9 +72,9 @@ class _Header extends StatelessWidget {
             ),
           ],
         ),
-        const Spacer(),
+         Spacer(),
         IconButton(
-          icon: const Icon(Icons.settings),
+          icon: Icon(Icons.settings),
           onPressed: null, // luego lo conectamos
         ),
       ],

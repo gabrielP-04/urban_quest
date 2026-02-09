@@ -10,7 +10,12 @@ import 'package:urban_quest/widgets/exploration_progress.dart';
 import 'package:urban_quest/widgets/poi_marker.dart';
 
 class MapScreen extends StatefulWidget {
-  const MapScreen({super.key});
+  final bool showBottomNav;
+
+  const MapScreen({
+    Key? key,
+    this.showBottomNav = true,
+  }) : super(key: key);
 
   @override
   State<MapScreen> createState() => _MapScreenState();

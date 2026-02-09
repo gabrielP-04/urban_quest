@@ -13,7 +13,6 @@ class AppTheme {
   static const Color bodyS = Color(0xFF777777);
   static const Color textPrimary = Color(0xFF212121);
 
-
   static ThemeData lightTheme = ThemeData(
     useMaterial3: true,
     scaffoldBackgroundColor: background,
@@ -28,7 +27,6 @@ class AppTheme {
       error: Colors.red,
       onError: Colors.white,
     ),
-
     textTheme: const TextTheme(
       displayLarge: TextStyle(
         fontSize: 36,
@@ -36,15 +34,31 @@ class AppTheme {
         color: title,
       ),
       displayMedium: TextStyle(
-         fontSize: 16,
-         color: subtitle
+        color: title,
+        fontWeight: FontWeight.bold,
+        fontSize: 20,
+      ),
+      displaySmall: TextStyle(fontSize: 16, color: subtitle),
+      titleLarge: TextStyle(
+        fontSize: 20,
+        fontWeight: FontWeight.bold,
+        color: Color(0xFF5A5A5A),
+      ),
+      titleMedium: TextStyle(
+        fontSize: 16,
+        fontWeight: FontWeight.w600,
+        color: subtitle,
+        letterSpacing: 0.5,
+      ),
+      titleSmall: TextStyle(
+        fontSize: 14,
+        color: Color(0xFF9E9E9E),
       ),
       bodySmall: TextStyle(
         color: bodyS,
         fontSize: 14,
       ),
     ),
-
     inputDecorationTheme: const InputDecorationTheme(
       filled: true,
       hintStyle: TextStyle(
@@ -55,6 +69,4 @@ class AppTheme {
       suffixIconColor: labels,
     ),
   );
-  
-
 }
