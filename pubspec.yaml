@@ -36,6 +36,8 @@ dependencies:
   # UI
   cupertino_icons: ^1.0.8
 
+  shared_preferences: ^2.2.3
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -43,6 +45,7 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+  
 
   # Assets (para tus POIs y rutas en JSON)
   assets:

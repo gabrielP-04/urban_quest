@@ -1,137 +1,102 @@
 [
   {
-    "id": "poi_001",
+    "id": "poi_duomo",
     "name": "Duomo di Milano",
-    "latitude": 45.4642,
-    "longitude": 9.1900,
+    "lat": 45.4642,
+    "lng": 9.1900,
     "category": "monument",
-    "description": "La catedral gótica más famosa de Milán, con impresionantes agujas y el Madonnina dorada en la cima.",
-    "imageUrl": null
+    "description": "Milan’s iconic Gothic cathedral, famous for its spires and the golden Madonnina statue at the top.",
+    "imageUrl": null,
+    "isOptional": false
   },
   {
-    "id": "poi_002",
+    "id": "poi_galleria",
     "name": "Galleria Vittorio Emanuele II",
-    "latitude": 45.4654,
-    "longitude": 9.1897,
-    "category": "cultural",
-    "description": "Una de las galerías comerciales más antiguas del mundo, con arquitectura de hierro y vidrio del siglo XIX.",
-    "imageUrl": null
+    "lat": 45.4654,
+    "lng": 9.1897,
+    "category": "culture",
+    "description": "One of the oldest shopping galleries in the world, featuring 19th-century iron and glass architecture.",
+    "imageUrl": null,
+    "isOptional": false
   },
   {
-    "id": "poi_003",
+    "id": "poi_scala",
     "name": "Teatro alla Scala",
-    "latitude": 45.4674,
-    "longitude": 9.1898,
-    "category": "cultural",
-    "description": "Uno de los teatros de ópera más prestigiosos del mundo, inaugurado en 1778.",
-    "imageUrl": null
+    "lat": 45.4674,
+    "lng": 9.1898,
+    "category": "culture",
+    "description": "One of the most prestigious opera houses in the world, inaugurated in 1778.",
+    "imageUrl": null,
+    "isOptional": false
   },
   {
-    "id": "poi_004",
+    "id": "poi_castello",
     "name": "Castello Sforzesco",
-    "latitude": 45.4706,
-    "longitude": 9.1795,
+    "lat": 45.4706,
+    "lng": 9.1795,
     "category": "monument",
-    "description": "Fortaleza medieval que alberga varios museos y obras de arte, incluida la última escultura de Miguel Ángel.",
-    "imageUrl": null
+    "description": "A medieval fortress housing several museums and art collections, including Michelangelo’s last sculpture.",
+    "imageUrl": null,
+    "isOptional": false
   },
   {
-    "id": "poi_005",
+    "id": "poi_sempione",
     "name": "Parco Sempione",
-    "latitude": 45.4729,
-    "longitude": 9.1781,
+    "lat": 45.4729,
+    "lng": 9.1781,
     "category": "viewpoint",
-    "description": "Gran parque público detrás del Castello Sforzesco, perfecto para paseos y picnics.",
-    "imageUrl": null
+    "description": "Large public park behind Castello Sforzesco, ideal for walks, relaxation, and city views.",
+    "imageUrl": null,
+    "isOptional": true
   },
   {
-    "id": "poi_006",
+    "id": "poi_last_supper",
     "name": "Santa Maria delle Grazie",
-    "latitude": 45.4659,
-    "longitude": 9.1708,
-    "category": "cultural",
-    "description": "Iglesia que alberga 'La Última Cena' de Leonardo da Vinci, Patrimonio de la Humanidad.",
-    "imageUrl": null
+    "lat": 45.4659,
+    "lng": 9.1708,
+    "category": "culture",
+    "description": "Church housing Leonardo da Vinci’s ‘The Last Supper’, a UNESCO World Heritage Site.",
+    "imageUrl": null,
+    "isOptional": false
   },
   {
-    "id": "poi_007",
+    "id": "poi_navigli",
     "name": "Navigli District",
-    "latitude": 45.4475,
-    "longitude": 9.1790,
-    "category": "gastronomy",
-    "description": "Barrio bohemio con canales históricos, repleto de bares, restaurantes y mercados de antigüedades.",
-    "imageUrl": null
+    "lat": 45.4475,
+    "lng": 9.1790,
+    "category": "food",
+    "description": "Historic canal district known for its vibrant nightlife, restaurants, and aperitivo culture.",
+    "imageUrl": null,
+    "isOptional": true
   },
   {
-    "id": "poi_008",
+    "id": "poi_brera",
     "name": "Pinacoteca di Brera",
-    "latitude": 45.4720,
-    "longitude": 9.1882,
-    "category": "cultural",
-    "description": "Una de las principales galerías de arte de Italia, con obras maestras del Renacimiento.",
-    "imageUrl": null
+    "lat": 45.4720,
+    "lng": 9.1882,
+    "category": "culture",
+    "description": "One of Italy’s most important art galleries, featuring masterpieces from the Renaissance.",
+    "imageUrl": null,
+    "isOptional": false
   },
   {
-    "id": "poi_009",
+    "id": "poi_arco",
     "name": "Arco della Pace",
-    "latitude": 45.4763,
-    "longitude": 9.1769,
+    "lat": 45.4763,
+    "lng": 9.1769,
     "category": "monument",
-    "description": "Arco triunfal neoclásico en la entrada norte de Parco Sempione.",
-    "imageUrl": null
+    "description": "Neoclassical triumphal arch located at the northern entrance of Parco Sempione.",
+    "imageUrl": null,
+    "isOptional": true
   },
   {
-    "id": "poi_010",
-    "name": "Basilica di Sant'Ambrogio",
-    "latitude": 45.4624,
-    "longitude": 9.1751,
+    "id": "poi_columns",
+    "name": "Columns of San Lorenzo",
+    "lat": 45.4582,
+    "lng": 9.1858,
     "category": "monument",
-    "description": "Una de las iglesias más antiguas de Milán, ejemplo del románico lombardo.",
-    "imageUrl": null
-  },
-  {
-    "id": "poi_011",
-    "name": "Quadrilatero della Moda",
-    "latitude": 45.4681,
-    "longitude": 9.1953,
-    "category": "cultural",
-    "description": "El distrito de la moda de lujo de Milán, con las boutiques más exclusivas del mundo.",
-    "imageUrl": null
-  },
-  {
-    "id": "poi_012",
-    "name": "Mercato di Porta Romana",
-    "latitude": 45.4493,
-    "longitude": 9.2016,
-    "category": "gastronomy",
-    "description": "Mercado tradicional con productos frescos, quesos, y especialidades italianas.",
-    "imageUrl": null
-  },
-  {
-    "id": "poi_013",
-    "name": "Torre Branca",
-    "latitude": 45.4734,
-    "longitude": 9.1775,
-    "category": "viewpoint",
-    "description": "Torre panorámica en Parco Sempione con vistas de 360° de Milán.",
-    "imageUrl": null
-  },
-  {
-    "id": "poi_014",
-    "name": "Colonne di San Lorenzo",
-    "latitude": 45.4582,
-    "longitude": 9.1858,
-    "category": "monument",
-    "description": "Antiguas columnas romanas del siglo II, popular punto de encuentro nocturno.",
-    "imageUrl": null
-  },
-  {
-    "id": "poi_015",
-    "name": "Pirelli Hangar Bicocca",
-    "latitude": 45.5217,
-    "longitude": 9.2115,
-    "category": "cultural",
-    "description": "Espacio de arte contemporáneo en una antigua fábrica de Pirelli.",
-    "imageUrl": null
+    "description": "Ancient Roman columns from the 2nd century, now a popular meeting point.",
+    "imageUrl": null,
+    "isOptional": true
   }
 ]

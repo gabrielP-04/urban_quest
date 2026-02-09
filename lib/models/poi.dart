@@ -1,50 +1,31 @@
-class POI {
+class Poi {
   final String id;
   final String name;
-  final double latitude;
-  final double longitude;
+  final double lat;
+  final double lng;
   final String category;
   final String description;
-  final String? imageUrl;
+  final bool isOptional;
 
-  POI({
+  Poi({
     required this.id,
     required this.name,
-    required this.latitude,
-    required this.longitude,
+    required this.lat,
+    required this.lng,
     required this.category,
     required this.description,
-    this.imageUrl,
+    required this.isOptional,
   });
 
-  // Desde JSON (para cargar desde archivo)
-  factory POI.fromJson(Map<String, dynamic> json) {
-    return POI(
-      id: json['id'] as String,
-      name: json['name'] as String,
-      latitude: (json['latitude'] as num).toDouble(),
-      longitude: (json['longitude'] as num).toDouble(),
-      category: json['category'] as String,
-      description: json['description'] as String,
-      imageUrl: json['imageUrl'] as String?,
+  factory Poi.fromJson(Map<String, dynamic> json) {
+    return Poi(
+      id: json['id'],
+      name: json['name'],
+      lat: (json['lat'] as num).toDouble(),
+      lng: (json['lng'] as num).toDouble(),
+      category: json['category'],
+      description: json['description'],
+      isOptional: json['isOptional'] ?? false,
     );
-  }
-
-  // Hacia JSON
-  Map<String, dynamic> toJson() {
-    return {
-      'id': id,
-      'name': name,
-      'latitude': latitude,
-      'longitude': longitude,
-      'category': category,
-      'description': description,
-      'imageUrl': imageUrl,
-    };
-  }
-
-  @override
-  String toString() {
-    return 'POI(id: $id, name: $name, category: $category)';
   }
 }
