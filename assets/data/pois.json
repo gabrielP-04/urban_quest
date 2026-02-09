@@ -1,102 +1,218 @@
 [
   {
-    "id": "poi_duomo",
+    "id": "poi_001",
     "name": "Duomo di Milano",
     "lat": 45.4642,
     "lng": 9.1900,
     "category": "monument",
-    "description": "Milan’s iconic Gothic cathedral, famous for its spires and the golden Madonnina statue at the top.",
-    "imageUrl": null,
-    "isOptional": false
+    "description": "Milan’s iconic Gothic cathedral, famous for its spires and the golden Madonnina statue on top.",
+    "imageUrl": null
   },
   {
-    "id": "poi_galleria",
+    "id": "poi_002",
     "name": "Galleria Vittorio Emanuele II",
     "lat": 45.4654,
     "lng": 9.1897,
-    "category": "culture",
+    "category": "cultural",
     "description": "One of the oldest shopping galleries in the world, featuring 19th-century iron and glass architecture.",
-    "imageUrl": null,
-    "isOptional": false
+    "imageUrl": null
   },
   {
-    "id": "poi_scala",
+    "id": "poi_003",
     "name": "Teatro alla Scala",
     "lat": 45.4674,
     "lng": 9.1898,
-    "category": "culture",
+    "category": "cultural",
     "description": "One of the most prestigious opera houses in the world, inaugurated in 1778.",
-    "imageUrl": null,
-    "isOptional": false
+    "imageUrl": null
   },
   {
-    "id": "poi_castello",
+    "id": "poi_004",
     "name": "Castello Sforzesco",
     "lat": 45.4706,
     "lng": 9.1795,
     "category": "monument",
-    "description": "A medieval fortress housing several museums and art collections, including Michelangelo’s last sculpture.",
-    "imageUrl": null,
-    "isOptional": false
+    "description": "A medieval fortress hosting several museums and masterpieces, including Michelangelo’s last sculpture.",
+    "imageUrl": null
   },
   {
-    "id": "poi_sempione",
+    "id": "poi_005",
     "name": "Parco Sempione",
     "lat": 45.4729,
     "lng": 9.1781,
     "category": "viewpoint",
-    "description": "Large public park behind Castello Sforzesco, ideal for walks, relaxation, and city views.",
-    "imageUrl": null,
-    "isOptional": true
+    "description": "Large public park behind Castello Sforzesco, ideal for walks and relaxation.",
+    "imageUrl": null
   },
   {
-    "id": "poi_last_supper",
+    "id": "poi_006",
     "name": "Santa Maria delle Grazie",
     "lat": 45.4659,
     "lng": 9.1708,
-    "category": "culture",
-    "description": "Church housing Leonardo da Vinci’s ‘The Last Supper’, a UNESCO World Heritage Site.",
-    "imageUrl": null,
-    "isOptional": false
+    "category": "cultural",
+    "description": "Church housing Leonardo da Vinci’s Last Supper, a UNESCO World Heritage Site.",
+    "imageUrl": null
   },
   {
-    "id": "poi_navigli",
+    "id": "poi_007",
     "name": "Navigli District",
     "lat": 45.4475,
     "lng": 9.1790,
-    "category": "food",
-    "description": "Historic canal district known for its vibrant nightlife, restaurants, and aperitivo culture.",
-    "imageUrl": null,
-    "isOptional": true
+    "category": "viewpoint",
+    "description": "Historic canal district known for its vibrant nightlife, bars, and restaurants.",
+    "imageUrl": null
   },
   {
-    "id": "poi_brera",
+    "id": "poi_008",
     "name": "Pinacoteca di Brera",
     "lat": 45.4720,
     "lng": 9.1882,
-    "category": "culture",
-    "description": "One of Italy’s most important art galleries, featuring masterpieces from the Renaissance.",
-    "imageUrl": null,
-    "isOptional": false
+    "category": "cultural",
+    "description": "One of Italy’s most important art galleries, featuring Renaissance masterpieces.",
+    "imageUrl": null
   },
   {
-    "id": "poi_arco",
+    "id": "poi_009",
     "name": "Arco della Pace",
     "lat": 45.4763,
     "lng": 9.1769,
     "category": "monument",
-    "description": "Neoclassical triumphal arch located at the northern entrance of Parco Sempione.",
-    "imageUrl": null,
-    "isOptional": true
+    "description": "A neoclassical triumphal arch located at the northern entrance of Parco Sempione.",
+    "imageUrl": null
   },
   {
-    "id": "poi_columns",
-    "name": "Columns of San Lorenzo",
+    "id": "poi_010",
+    "name": "Basilica di Sant'Ambrogio",
+    "lat": 45.4624,
+    "lng": 9.1751,
+    "category": "monument",
+    "description": "One of the oldest churches in Milan and a prime example of Lombard Romanesque architecture.",
+    "imageUrl": null
+  },
+  {
+    "id": "poi_011",
+    "name": "Quadrilatero della Moda",
+    "lat": 45.4681,
+    "lng": 9.1953,
+    "category": "cultural",
+    "description": "Milan’s luxury fashion district, home to some of the world’s most exclusive boutiques.",
+    "imageUrl": null
+  },
+  {
+    "id": "poi_012",
+    "name": "Mercato Centrale Milano",
+    "lat": 45.4841,
+    "lng": 9.2041,
+    "category": "gastronomy",
+    "description": "Modern food market offering a wide selection of Italian cuisine and local products.",
+    "imageUrl": null
+  },
+  {
+    "id": "poi_013",
+    "name": "Torre Branca",
+    "lat": 45.4734,
+    "lng": 9.1775,
+    "category": "viewpoint",
+    "description": "Panoramic tower in Parco Sempione offering 360-degree views over Milan.",
+    "imageUrl": null
+  },
+  {
+    "id": "poi_014",
+    "name": "Colonne di San Lorenzo",
     "lat": 45.4582,
     "lng": 9.1858,
     "category": "monument",
-    "description": "Ancient Roman columns from the 2nd century, now a popular meeting point.",
-    "imageUrl": null,
-    "isOptional": true
+    "description": "Ancient Roman columns dating back to the 2nd century, now a popular social gathering spot.",
+    "imageUrl": null
+  },
+  {
+    "id": "poi_015",
+    "name": "Pirelli Hangar Bicocca",
+    "lat": 45.5217,
+    "lng": 9.2115,
+    "category": "cultural",
+    "description": "Contemporary art space located in a former industrial building.",
+    "imageUrl": null
+  },
+  {
+    "id": "poi_016",
+    "name": "Luini Panzerotti",
+    "lat": 45.4657,
+    "lng": 9.1895,
+    "category": "gastronomy",
+    "description": "Famous takeaway spot known for its freshly baked panzerotti.",
+    "imageUrl": null
+  },
+  {
+    "id": "poi_017",
+    "name": "Eataly Smeraldo",
+    "lat": 45.4839,
+    "lng": 9.1885,
+    "category": "gastronomy",
+    "description": "Large Italian food market combining restaurants, shops, and culinary experiences.",
+    "imageUrl": null
+  },
+  {
+    "id": "poi_018",
+    "name": "Pasticceria Marchesi",
+    "lat": 45.4678,
+    "lng": 9.1964,
+    "category": "gastronomy",
+    "description": "Historic pastry shop offering refined Italian desserts and coffee.",
+    "imageUrl": null
+  },
+  {
+    "id": "poi_019",
+    "name": "Bosco Verticale",
+    "lat": 45.4835,
+    "lng": 9.1894,
+    "category": "viewpoint",
+    "description": "Innovative residential towers covered with trees and plants, symbol of modern Milan.",
+    "imageUrl": null
+  },
+  {
+    "id": "poi_020",
+    "name": "CityLife District",
+    "lat": 45.4782,
+    "lng": 9.1557,
+    "category": "cultural",
+    "description": "Modern urban district featuring contemporary architecture, parks, and shopping areas.",
+    "imageUrl": null
+  },
+  {
+    "id": "poi_021",
+    "name": "Fondazione Prada",
+    "lat": 45.4458,
+    "lng": 9.2056,
+    "category": "cultural",
+    "description": "Contemporary art and cultural center designed by architect Rem Koolhaas.",
+    "imageUrl": null
+  },
+  {
+    "id": "poi_022",
+    "name": "Cimitero Monumentale",
+    "lat": 45.4846,
+    "lng": 9.1820,
+    "category": "monument",
+    "description": "Monumental cemetery known for its impressive tombs and artistic sculptures.",
+    "imageUrl": null
+  },
+  {
+    "id": "poi_023",
+    "name": "Porta Nuova Skyline",
+    "lat": 45.4830,
+    "lng": 9.1910,
+    "category": "viewpoint",
+    "description": "Modern skyline area showcasing Milan’s contemporary architecture.",
+    "imageUrl": null
+  },
+  {
+    "id": "poi_024",
+    "name": "Università degli Studi di Milano",
+    "lat": 45.4600,
+    "lng": 9.1950,
+    "category": "cultural",
+    "description": "Historic university complex located in a former Renaissance hospital.",
+    "imageUrl": null
   }
 ]

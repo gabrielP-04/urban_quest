@@ -5,6 +5,7 @@ class Poi {
   final double lng;
   final String category;
   final String description;
+  final String? imageUrl;
   final bool isOptional;
 
   Poi({
@@ -14,7 +15,8 @@ class Poi {
     required this.lng,
     required this.category,
     required this.description,
-    required this.isOptional,
+    this.imageUrl,
+    this.isOptional = false,
   });
 
   factory Poi.fromJson(Map<String, dynamic> json) {
@@ -25,6 +27,7 @@ class Poi {
       lng: (json['lng'] as num).toDouble(),
       category: json['category'],
       description: json['description'],
+      imageUrl: json['imageUrl'],
       isOptional: json['isOptional'] ?? false,
     );
   }
