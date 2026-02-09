@@ -12,6 +12,7 @@ import 'package:urban_quest/services/custom_route_storage.dart';
 import 'package:urban_quest/services/location_service.dart';
 import 'package:urban_quest/services/poi_service.dart';
 import 'package:urban_quest/services/route_service.dart';
+import 'package:urban_quest/services/routing_service.dart';
 import 'package:urban_quest/services/visited_poi_storage.dart';
 import 'package:urban_quest/widgets/exploration_progress.dart';
 import 'package:urban_quest/widgets/poi_marker.dart';
@@ -85,6 +86,11 @@ class _MapScreenState extends State<MapScreen> {
     return _selectedPois.any((p) => p.id == poi.id);
   }
 
+  List<LatLng> _realRoutePoints = [];
+  double _routeDistanceMeters = 0;
+  double _routeDurationSeconds = 0;
+  bool _isBuildingRoute = false;
+
   @override
   void initState() {
     super.initState();
@@ -123,6 +129,8 @@ class _MapScreenState extends State<MapScreen> {
           });
 
           await ActiveRouteStorage.saveActiveRouteId(route.id);
+
+          await _buildRealRoute(route);
 
           WidgetsBinding.instance.addPostFrameCallback((_) {
             _centerMapOnRoute(route);
@@ -183,14 +191,18 @@ class _MapScreenState extends State<MapScreen> {
 
     setState(() {
       _pois = pois;
-      _availableRoutes = routes;
+      _availableRoutes = [
+        ...routes,
+        ...customRoutes,
+      ];
       _activeRoute = restoredRoute;
       _isLoading = false;
     });
 
     if (restoredRoute != null) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        _centerMapOnRoute(restoredRoute!);
+      WidgetsBinding.instance.addPostFrameCallback((_) async {
+        await _buildRealRoute(restoredRoute!);
+        _centerMapOnRoute(restoredRoute);
       });
     }
   }
@@ -211,6 +223,30 @@ class _MapScreenState extends State<MapScreen> {
     final ids = await VisitedPoiStorage.loadVisitedPoiIds();
     setState(() {
       _visitedPoiIds.addAll(ids);
+    });
+  }
+
+  Future<void> _buildRealRoute(RouteModel route) async {
+    setState(() {
+      _isBuildingRoute = true;
+      _realRoutePoints.clear();
+      _routeDistanceMeters = 0;
+      _routeDurationSeconds = 0;
+    });
+
+    for (int i = 0; i < route.pois.length - 1; i++) {
+      final start = LatLng(route.pois[i].lat, route.pois[i].lng);
+      final end = LatLng(route.pois[i + 1].lat, route.pois[i + 1].lng);
+
+      final segment = await RoutingService.getRoute(start, end);
+
+      _realRoutePoints.addAll(segment.points);
+      _routeDistanceMeters += segment.distanceMeters;
+      _routeDurationSeconds += segment.durationSeconds;
+    }
+
+    setState(() {
+      _isBuildingRoute = false;
     });
   }
 
@@ -239,13 +275,11 @@ class _MapScreenState extends State<MapScreen> {
                         subdomains: const ['a', 'b', 'c', 'd'],
                         userAgentPackageName: 'com.example.urbanquest',
                       ),
-                      if (_activeRoute != null)
+                      if (_realRoutePoints.isNotEmpty)
                         PolylineLayer(
                           polylines: [
                             Polyline(
-                              points: _activeRoute!.pois
-                                  .map((p) => LatLng(p.lat, p.lng))
-                                  .toList(),
+                              points: _realRoutePoints,
                               strokeWidth: 4,
                               color: Colors.deepOrange,
                             ),
@@ -316,22 +350,11 @@ class _MapScreenState extends State<MapScreen> {
                           onPressed: _openRouteList,
                           child: const Icon(Icons.alt_route),
                         ),
-                        FloatingActionButton(
-                          heroTag: 'create_route',
-                          backgroundColor: Colors.blueAccent,
-                          onPressed: () {
-                            setState(() {
-                              _isCreatingRoute = true;
-                              _selectedPois.clear();
-                            });
-                          },
-                          child: const Icon(Icons.edit_location_alt),
-                        ),
-                        if (_isCreatingRoute)
+                        if (_isCreatingRoute && _selectedPois.length >= 2)
                           FloatingActionButton(
-                            heroTag: 'save_route',
+                            heroTag: 'generate_route',
                             backgroundColor: Colors.green,
-                            onPressed: _saveCustomRoute,
+                            onPressed: _generateAndSaveRoute,
                             child: const Icon(Icons.check),
                           ),
                       ],
@@ -523,27 +546,64 @@ class _MapScreenState extends State<MapScreen> {
     return ordered;
   }
 
-  void _generateAndSaveRoute() {
+  Future<void> _generateAndSaveRoute() async {
+    if (_selectedPois.length < 2) return;
+
     final orderedPois = _generateOptimizedRoute();
+    final controller = TextEditingController();
 
-    final route = RouteModel(
-      id: DateTime.now().millisecondsSinceEpoch.toString(),
-      name: 'My custom route',
-      type: RouteType.cultural,
-      isCustom: true,
-      pois: orderedPois,
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text('Route name'),
+        content: TextField(
+          controller: controller,
+          decoration: const InputDecoration(
+            hintText: 'My custom route',
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              final name = controller.text.trim();
+              if (name.isEmpty) return;
+
+              final route = RouteModel(
+                id: DateTime.now().millisecondsSinceEpoch.toString(),
+                name: name,
+                type: RouteType.cultural,
+                isCustom: true,
+                pois: orderedPois,
+              );
+
+              setState(() {
+                _activeRoute = route;
+                _availableRoutes.add(route);
+                _selectedPois.clear();
+                _isCreatingRoute = false;
+              });
+
+              await CustomRouteStorage.saveRoutes(
+                _availableRoutes.where((r) => r.isCustom).toList(),
+              );
+
+              await _buildRealRoute(route);
+
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                _centerMapOnRoute(route);
+              });
+
+              Navigator.pop(context);
+            },
+            child: const Text('Generate'),
+          ),
+        ],
+      ),
     );
-
-    setState(() {
-      _activeRoute = route;
-      _availableRoutes.add(route);
-      _selectedPois.clear();
-      _isCreatingRoute = false;
-    });
-
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _centerMapOnRoute(route);
-    });
   }
 
   void _saveCustomRoute() async {
@@ -602,6 +662,9 @@ class _MapScreenState extends State<MapScreen> {
   void _clearActiveRoute() async {
     setState(() {
       _activeRoute = null;
+      _realRoutePoints.clear();
+      _routeDistanceMeters = 0;
+      _routeDurationSeconds = 0;
     });
 
     await ActiveRouteStorage.clearActiveRoute();
