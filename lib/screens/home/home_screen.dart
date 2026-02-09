@@ -1,9 +1,14 @@
 import 'package:flutter/material.dart';
 import '../map/map_screen.dart';
-import '../../widgets/bottom_nav.dart';
 
 class HomeScreen extends StatelessWidget {
-  const HomeScreen({super.key});
+
+  final bool showBottomNav;
+
+   const HomeScreen({
+    Key? key,
+    this.showBottomNav = true,
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -28,7 +33,6 @@ class HomeScreen extends StatelessWidget {
           ),
         ),
       ),
-      bottomNavigationBar: const BottomNav(currentIndex: 0),
     );
   }
 }

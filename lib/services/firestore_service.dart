@@ -92,6 +92,24 @@ class FirestoreService {
     });
   }
 
+  Future<void> updateUserEmail({
+  required String userId,
+  required String email,
+}) async {
+  try {
+    await _firestore
+        .collection(AppConstants.usersCollection)
+        .doc(userId)
+        .update({
+          'email': email,
+          'updatedAt': FieldValue.serverTimestamp(),
+        });
+  } catch (e) {
+    debugPrint('Error al actualizar email: $e');
+    throw 'Error al actualizar email: $e';
+  }
+}
+
   /// Actualizar perfil de usuario
   Future<void> updateUserProfile(UserProfile profile) async {
     try {

@@ -1,8 +1,13 @@
 import 'package:flutter/material.dart';
-import '../../widgets/bottom_nav.dart';
 
 class RankingScreen extends StatelessWidget {
-  const RankingScreen({Key? key}) : super(key: key);
+
+    final bool showBottomNav;
+
+  const RankingScreen({
+    Key? key,
+    this.showBottomNav = true,
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -41,7 +46,6 @@ class RankingScreen extends StatelessWidget {
           ],
         ),
       ),
-      bottomNavigationBar: const BottomNav(currentIndex: 2),
     );
   }
 }

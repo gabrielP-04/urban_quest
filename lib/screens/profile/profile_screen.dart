@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../../widgets/bottom_nav.dart';
 import '../../services/auth_service.dart';
 import '../../services/firestore_service.dart';
 import '../../models/user_profile.dart';
@@ -7,7 +6,13 @@ import 'account_security_screen.dart';
 import 'edit_profile_screen.dart';
 
 class ProfileScreen extends StatelessWidget {
-  const ProfileScreen({Key? key}) : super(key: key);
+
+  final bool showBottomNav;
+
+  const ProfileScreen({
+    Key? key,
+    this.showBottomNav = true,
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -112,7 +117,6 @@ class ProfileScreen extends StatelessWidget {
           );
         },
       ),
-      bottomNavigationBar: const BottomNav(currentIndex: 3),
     );
   }
 
@@ -614,7 +618,7 @@ class ProfileScreen extends StatelessWidget {
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-              color: const Color(0xFFFF9A56).withOpacity(0.3),
+              color: const Color(0xFFFF9A56).withValues(alpha: 0.3),
               blurRadius: 12,
               offset: const Offset(0, 6),
             ),

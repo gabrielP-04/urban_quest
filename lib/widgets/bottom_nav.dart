@@ -1,15 +1,13 @@
 import 'package:flutter/material.dart';
-import '../screens/home/home_screen.dart';
-import '../screens/map/map_screen.dart';
-import '../screens/profile/profile_screen.dart';
-import '../screens/ranking/ranking_screen.dart';
 
 class BottomNav extends StatelessWidget {
   final int currentIndex;
-  
+  final Function(int) onTabChanged;
+
   const BottomNav({
-    super.key, 
+    super.key,
     required this.currentIndex,
+    required this.onTabChanged,
   });
 
   @override
@@ -58,47 +56,7 @@ class BottomNav extends StatelessWidget {
             label: 'Profile',
           ),
         ],
-        onTap: (index) => _onItemTapped(context, index),
-      ),
-    );
-  }
-
-  void _onItemTapped(BuildContext context, int index) {
-    // Evitar navegar a la misma pantalla
-    if (index == currentIndex) return;
-
-    // Navegar a la pantalla correspondiente
-    Widget destination;
-    
-    switch (index) {
-      case 0:
-        destination = const HomeScreen();
-        break;
-      case 1:
-        destination = const MapScreen();
-        break;
-      case 2:
-        destination = const RankingScreen(); // Progress/Ranking
-        break;
-      case 3:
-        destination = const ProfileScreen();
-        break;
-      default:
-        return;
-    }
-
-    // Reemplazar la ruta actual (sin apilar pantallas)
-    Navigator.pushReplacement(
-      context,
-      PageRouteBuilder(
-        pageBuilder: (context, animation, secondaryAnimation) => destination,
-        transitionsBuilder: (context, animation, secondaryAnimation, child) {
-          return FadeTransition(
-            opacity: animation,
-            child: child,
-          );
-        },
-        transitionDuration: const Duration(milliseconds: 200),
+        onTap: onTabChanged,
       ),
     );
   }

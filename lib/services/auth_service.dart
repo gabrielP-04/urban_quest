@@ -81,6 +81,8 @@ class AuthService {
     }
   }
 
+  
+
   /// Manejo de errores de Firebase Auth en español
   String _handleAuthException(FirebaseAuthException e) {
     switch (e.code) {
