@@ -277,7 +277,7 @@ class ProfileScreen extends StatelessWidget {
                       const Text('🇮🇹', style: TextStyle(fontSize: 16)),
                       const SizedBox(width: 8),
                       Text(
-                        'Urban Explorer',
+                        profile.profileTitle, // ✅ Mostrar el título personalizado del usuario
                         style: TextStyle(
                           fontSize: 14,
                           color: Colors.deepOrange.shade700,

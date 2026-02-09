@@ -22,7 +22,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   final _firestoreService = FirestoreService();
 
   bool _isLoading = false;
-  String _selectedTitle = 'Urban Explorer';
+  late String _selectedTitle;
   late String _selectedAvatarId;
   late String _selectedBannerId;
 
@@ -42,6 +42,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     super.initState();
     _firstNameController.text = widget.profile.firstName;
     _lastNameController.text = widget.profile.lastName;
+    _selectedTitle = widget.profile.profileTitle;  // ✅ Inicializar con el título del perfil
     _selectedAvatarId = widget.profile.avatarId;
     _selectedBannerId = widget.profile.bannerId;
   }
@@ -65,6 +66,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         displayName: '${_firstNameController.text.trim()} ${_lastNameController.text.trim()}',
         avatarId: _selectedAvatarId,
         bannerId: _selectedBannerId,
+        profileTitle: _selectedTitle,  // ✅ Guardar el título seleccionado
       );
 
       await _firestoreService.updateUserProfile(updatedProfile);
@@ -249,53 +251,60 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           ),
         ),
 
-        // Avatar (posicionado sobre el banner a la izquierda)
+        // Avatar
         Positioned(
           bottom: -50,
-          left: 32,
-          child: GestureDetector(
-            onTap: _selectAvatar,
-            child: Stack(
-              children: [
-                Container(
-                  width: 100,
-                  height: 100,
-                  decoration: BoxDecoration(
-                    color: avatar.color,
-                    shape: BoxShape.circle,
-                    border: Border.all(color: Colors.white, width: 4),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.2),
-                        blurRadius: 12,
-                        offset: const Offset(0, 4),
+          left: 0,
+          right: 0,
+          child: Center(
+            child: InkWell(
+              onTap: _selectAvatar,
+              child: Container(
+                width: 120,
+                height: 120,
+                decoration: BoxDecoration(
+                  color: avatar.color,
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: const Color(0xFFFAF3ED),
+                    width: 6,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.15),
+                      blurRadius: 15,
+                      offset: const Offset(0, 5),
+                    ),
+                  ],
+                ),
+                child: Stack(
+                  children: [
+                    Center(
+                      child: Text(
+                        avatar.emoji,
+                        style: const TextStyle(fontSize: 56),
                       ),
-                    ],
-                  ),
-                  child: Center(
-                    child: Text(
-                      avatar.emoji,
-                      style: const TextStyle(fontSize: 40),
                     ),
-                  ),
+                    // Edit button avatar
+                    Positioned(
+                      right: 4,
+                      bottom: 4,
+                      child: Container(
+                        padding: const EdgeInsets.all(6),
+                        decoration: BoxDecoration(
+                          color: Colors.deepOrange,
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(
+                          Icons.edit,
+                          size: 16,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
-                Positioned(
-                  right: 0,
-                  bottom: 0,
-                  child: Container(
-                    padding: const EdgeInsets.all(6),
-                    decoration: const BoxDecoration(
-                      color: Colors.deepOrange,
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(
-                      Icons.edit,
-                      size: 16,
-                      color: Colors.white,
-                    ),
-                  ),
-                ),
-              ],
+              ),
             ),
           ),
         ),
