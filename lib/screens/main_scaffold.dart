@@ -15,6 +15,10 @@ class MainScaffold extends StatefulWidget {
 
   @override
   State<MainScaffold> createState() => _MainScaffoldState();
+
+   static _MainScaffoldState? of(BuildContext context) {
+    return context.findAncestorStateOfType<_MainScaffoldState>();
+  }
 }
 
 class _MainScaffoldState extends State<MainScaffold> {
@@ -31,6 +35,14 @@ class _MainScaffoldState extends State<MainScaffold> {
       _currentIndex = index;
     });
   }
+
+  void changeTab(int index) {
+    setState(() {
+      _currentIndex = index;
+    });
+  }
+
+ 
 
   @override
   Widget build(BuildContext context) {

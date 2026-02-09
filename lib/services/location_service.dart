@@ -20,4 +20,13 @@ class LocationService {
       desiredAccuracy: LocationAccuracy.high,
     );
   }
+
+  static Stream<Position> getPositionStream() {
+    return Geolocator.getPositionStream(
+      locationSettings: const LocationSettings(
+        accuracy: LocationAccuracy.high,
+        distanceFilter: 5, // metros
+      ),
+    );
+  }
 }
