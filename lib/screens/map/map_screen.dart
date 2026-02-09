@@ -129,13 +129,14 @@ class _MapScreenState extends State<MapScreen> {
           });
 
           await ActiveRouteStorage.saveActiveRouteId(route.id);
-
           await _buildRealRoute(route);
 
           WidgetsBinding.instance.addPostFrameCallback((_) {
             _centerMapOnRoute(route);
           });
         },
+        onDelete: _deleteCustomRoute,
+        onEdit: _editCustomRoute,
       ),
     );
   }
@@ -166,6 +167,69 @@ class _MapScreenState extends State<MapScreen> {
         padding: const EdgeInsets.all(60),
       ),
     );
+  }
+
+  Future<void> _deleteCustomRoute(RouteModel route) async {
+    if (!route.isCustom) return;
+
+    setState(() {
+      _availableRoutes.removeWhere((r) => r.id == route.id);
+
+      if (_activeRoute?.id == route.id) {
+        _activeRoute = null;
+        _realRoutePoints.clear();
+        _routeDistanceMeters = 0;
+        _routeDurationSeconds = 0;
+      }
+    });
+
+    await CustomRouteStorage.saveRoutes(
+      _availableRoutes.where((r) => r.isCustom).toList(),
+    );
+  }
+
+  Future<String?> _editCustomRoute(RouteModel route) async {
+    final controller = TextEditingController(text: route.name);
+    String? newName;
+
+    await showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text('Edit route name'),
+        content: TextField(controller: controller),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              final value = controller.text.trim();
+              if (value.isEmpty) return;
+
+              setState(() {
+                final index =
+                    _availableRoutes.indexWhere((r) => r.id == route.id);
+                if (index != -1) {
+                  _availableRoutes[index] =
+                      _availableRoutes[index].copyWith(name: value);
+                }
+              });
+
+              await CustomRouteStorage.saveRoutes(
+                _availableRoutes.where((r) => r.isCustom).toList(),
+              );
+
+              newName = value;
+              Navigator.pop(context);
+            },
+            child: const Text('Save'),
+          ),
+        ],
+      ),
+    );
+
+    return newName;
   }
 
   Future<void> _loadPois() async {

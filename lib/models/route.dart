@@ -21,7 +21,16 @@ class RouteModel {
     required this.pois,
     this.isCustom = false,
   });
+
+  RouteModel copyWith({
+    String? name,
+  }) {
+    return RouteModel(
+      id: id,
+      name: name ?? this.name,
+      type: type,
+      isCustom: isCustom,
+      pois: pois,
+    );
+  }
 }
-
-
-
