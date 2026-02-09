@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import '../map/map_screen.dart';
+import '../../services/auth_service.dart';
+import '../../services/firestore_service.dart';
+import '../../models/user_profile.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -25,7 +28,7 @@ class HomeScreen extends StatelessWidget {
               _QuickActionsRow(),
               SizedBox(height: 16),
               _RecommendationCard(),
-              SizedBox(height: 80), // espacio para que no tape el bottom nav
+              SizedBox(height: 80), 
             ],
           ),
         ),

@@ -28,7 +28,7 @@ class AuthService {
     } on FirebaseAuthException catch (e) {
       throw _handleAuthException(e);
     } catch (e) {
-      throw 'Error inesperado: $e';
+      throw 'Something went wrong $e';
     }
   }
 
@@ -46,7 +46,7 @@ class AuthService {
     } on FirebaseAuthException catch (e) {
       throw _handleAuthException(e);
     } catch (e) {
-      throw 'Error inesperado: $e';
+      throw 'Something went wrong: $e';
     }
   }
 
@@ -55,7 +55,7 @@ class AuthService {
     try {
       await _auth.signOut();
     } catch (e) {
-      throw 'Error al cerrar sesión: $e';
+      throw 'Could not sign out: $e';
     }
   }
 
@@ -66,7 +66,7 @@ class AuthService {
     } on FirebaseAuthException catch (e) {
       throw _handleAuthException(e);
     } catch (e) {
-      throw 'Error al enviar correo de recuperación: $e';
+      throw 'Could not send password reset email: $e';
     }
   }
 
@@ -77,7 +77,7 @@ class AuthService {
     } on FirebaseAuthException catch (e) {
       throw _handleAuthException(e);
     } catch (e) {
-      throw 'Error al eliminar cuenta: $e';
+      throw 'Could not delete account: $e';
     }
   }
 
@@ -85,29 +85,29 @@ class AuthService {
   String _handleAuthException(FirebaseAuthException e) {
     switch (e.code) {
       case 'user-not-found':
-        return 'No existe ninguna cuenta con este correo electrónico';
+        return 'No account found with this email address.';
       case 'wrong-password':
-        return 'Contraseña incorrecta';
+        return 'Incorrect password. Please try again.';
       case 'email-already-in-use':
-        return 'Ya existe una cuenta con este correo electrónico';
+        return 'An account already exists with this email address.';
       case 'weak-password':
-        return 'La contraseña debe tener al menos 6 caracteres';
+        return 'Password must be at least 6 characters long.';
       case 'invalid-email':
-        return 'El correo electrónico no es válido';
+        return 'Please enter a valid email address.';
       case 'user-disabled':
-        return 'Esta cuenta ha sido deshabilitada';
+        return 'This account has been disabled. Please contact support.';
       case 'too-many-requests':
-        return 'Demasiados intentos. Intenta de nuevo más tarde';
+        return 'Too many attempts. Please try again later.';
       case 'operation-not-allowed':
-        return 'Operación no permitida';
+        return 'This operation is not allowed at the moment.';
       case 'invalid-credential':
-        return 'Las credenciales no son válidas';
+        return 'The email or password is incorrect. Please try again.';
       case 'network-request-failed':
-        return 'Error de conexión. Verifica tu internet';
+        return 'Network error. Please check your internet connection.';
       case 'requires-recent-login':
-        return 'Esta operación requiere que inicies sesión nuevamente';
+        return 'For security reasons, please sign in again to continue.';
       default:
-        return 'Error de autenticación: ${e.message ?? e.code}';
+        return 'Authentication error: ${e.message ?? e.code}';
     }
   }
 }

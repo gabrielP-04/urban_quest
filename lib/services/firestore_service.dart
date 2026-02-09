@@ -1,30 +1,56 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/user_profile.dart';
 import '../core/constants/app_constants.dart';
+import 'package:flutter/foundation.dart';
 
 class FirestoreService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
-  /// Crear perfil de usuario nuevo
+  /// Crear perfil de usuario nuevo con información completa
   Future<void> createUserProfile({
     required String userId,
     required String email,
+    required String firstName,
+    required String lastName,
+    required String username,
   }) async {
     try {
-      final userProfile = UserProfile(
-        userId: userId,
-        email: email,
-        experiencePoints: 0,
-        visitedPoiIds: [],
-        completedRouteIds: [],
-        achievementIds: [],
-      );
-
-      await _firestore
+      // Verificar si ya existe el perfil
+      final docRef = _firestore
           .collection(AppConstants.usersCollection)
-          .doc(userId)
-          .set(userProfile.toFirestore());
+          .doc(userId);
+      
+      final docSnapshot = await docRef.get();
+      
+      // Si ya existe, no hacer nada
+      if (docSnapshot.exists) {
+        debugPrint('El perfil ya existe para el usuario $userId');
+        return;
+      }
+
+      // Crear nombre completo para display
+      final displayName = '$firstName $lastName'.trim();
+
+      // Crear nuevo perfil
+      final now = DateTime.now();
+      final userProfile = {
+        'email': email,
+        'displayName': displayName,
+        'username': username,
+        'firstName': firstName,
+        'lastName': lastName,
+        'experiencePoints': 0,
+        'visitedPoiIds': [],
+        'completedRouteIds': [],
+        'achievementIds': [],
+        'createdAt': now.toIso8601String(),
+        'lastActive': now.toIso8601String(),
+      };
+
+      await docRef.set(userProfile);
+      debugPrint('Perfil creado exitosamente para $displayName (@$username)');
     } catch (e) {
+      debugPrint('Error al crear perfil en Firestore: $e');
       throw 'Error al crear perfil: $e';
     }
   }
@@ -42,11 +68,12 @@ class FirestoreService {
       }
       return null;
     } catch (e) {
-      throw 'Error al obtener perfil: $e';
+      debugPrint('Error al obtener perfil: $e');
+      return null;
     }
   }
 
-  /// Stream del perfil de usuario (para actualizaciones en tiempo real)
+  /// Stream del perfil de usuario
   Stream<UserProfile?> userProfileStream(String userId) {
     return _firestore
         .collection(AppConstants.usersCollection)
@@ -54,7 +81,12 @@ class FirestoreService {
         .snapshots()
         .map((doc) {
       if (doc.exists && doc.data() != null) {
-        return UserProfile.fromFirestore(doc.data()!, userId);
+        try {
+          return UserProfile.fromFirestore(doc.data()!, userId);
+        } catch (e) {
+          debugPrint('Error al parsear perfil: $e');
+          return null;
+        }
       }
       return null;
     });
@@ -68,6 +100,7 @@ class FirestoreService {
           .doc(profile.userId)
           .update(profile.toFirestore());
     } catch (e) {
+      debugPrint('Error al actualizar perfil: $e');
       throw 'Error al actualizar perfil: $e';
     }
   }
