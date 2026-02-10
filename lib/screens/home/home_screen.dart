@@ -1,356 +1,585 @@
 import 'package:flutter/material.dart';
 import 'package:urban_quest/screens/main_scaffold.dart';
-import '../map/map_screen.dart';
 import '../../services/auth_service.dart';
 import '../../services/firestore_service.dart';
 import '../../models/user_profile.dart';
+import '../../core/utils/profile_assets.dart';
+import 'package:urban_quest/models/gamification_models.dart';
+import 'package:urban_quest/services/gamification_services.dart';
 
 class HomeScreen extends StatelessWidget {
-
-  final bool showBottomNav;
-
-   const HomeScreen({
-    Key? key,
-    this.showBottomNav = true,
-  }) : super(key: key);
+  const HomeScreen({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
+    final authService = AuthService();
+    final firestoreService = FirestoreService();
+    final gamificationController = GamificationController();
+
+    final currentUserId = authService.currentUserId;
+
+    if (currentUserId == null) {
+      return const Scaffold(
+        body: Center(child: Text('No user logged in')),
+      );
+    }
+
     return Scaffold(
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: const [
-              _Header(),
-              SizedBox(height: 16),
-              _CityProgressCard(progress: 0.42, xp: 1250, xpGoal: 2000),
-              SizedBox(height: 16),
-              _MapPreviewCard(),
-              SizedBox(height: 16),
-              _QuickActionsRow(),
-              SizedBox(height: 16),
-              _RecommendationCard(),
-              SizedBox(height: 80), 
-            ],
-          ),
+        child: StreamBuilder<UserProfile?>(
+          stream: firestoreService.userProfileStream(currentUserId),
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Center(
+                child: CircularProgressIndicator(color: Colors.deepOrange),
+              );
+            }
+
+            final profile = snapshot.data;
+            if (profile == null) {
+              return const Center(child: Text('Profile not found'));
+            }
+
+            return SingleChildScrollView(
+              physics: const BouncingScrollPhysics(),
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  children: [
+                    // ⬇️ ESPERAMOS a GamificationData
+                    FutureBuilder<GamificationData>(
+                      future: gamificationController.experienceService
+                          .getUserGamificationData(currentUserId),
+                      builder: (context, snapshot) {
+                        if (snapshot.connectionState ==
+                            ConnectionState.waiting) {
+                          return const Padding(
+                            padding: EdgeInsets.symmetric(vertical: 24),
+                            child: CircularProgressIndicator(
+                              color: Colors.deepOrange,
+                            ),
+                          );
+                        }
+
+                        if (!snapshot.hasData) {
+                          return const SizedBox(); // o Text de error si quieres
+                        }
+
+                        return _ProfileHeader(
+                          profile: profile,
+                          data: snapshot.data!,
+                        );
+                      },
+                    ),
+
+                    const SizedBox(height: 16),
+                    _MapCard(profile: profile),
+                    const SizedBox(height: 16),
+                    _StatsCard(profile: profile),
+                    const SizedBox(height: 90),
+                  ],
+                ),
+              ),
+            );
+          },
         ),
       ),
-      
     );
   }
 }
 
-class _Header extends StatelessWidget {
-  const _Header();
+// ==================== PROFILE HEADER ====================
+class _ProfileHeader extends StatelessWidget {
+  final UserProfile profile;
+  final GamificationData data;
 
-  @override
-  Widget build(BuildContext context) {
-    return const Row(
-      children: [
-         CircleAvatar(
-          radius: 24,
-          backgroundColor: Color(0xFFFFB74D),
-          child: Icon(Icons.person, color: Colors.white),
-        ),
-         SizedBox(width: 12),
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children:  [
-            Text(
-              'Hola, Alex',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            SizedBox(height: 2),
-            Row(
-              children: [
-                Icon(Icons.flag, size: 14, color: Colors.grey),
-                SizedBox(width: 6),
-                Text('Milán · Exploración activa',
-                    style: TextStyle(color: Colors.grey)),
-              ],
-            ),
-          ],
-        ),
-         Spacer(),
-        IconButton(
-          icon: Icon(Icons.settings),
-          onPressed: null, // luego lo conectamos
-        ),
-      ],
-    );
-  }
-}
-
-class _CityProgressCard extends StatelessWidget {
-  final double progress;
-  final int xp;
-  final int xpGoal;
-
-  const _CityProgressCard({
-    required this.progress,
-    required this.xp,
-    required this.xpGoal,
+  const _ProfileHeader({
+    required this.profile,
+    required this.data,
   });
 
   @override
   Widget build(BuildContext context) {
-    final pct = (progress * 100).round();
-    return Card(
-      elevation: 0.5,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                const Icon(Icons.location_on, color: Colors.deepOrange),
-                const SizedBox(width: 8),
-                const Text(
-                  'Progreso de la ciudad',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+    final avatar = ProfileAssets.getAvatar(profile.avatarId);
+
+    final int level = data.level;
+    final double progress = data.progressToNextLevel;
+    final int xp = profile.experiencePoints;
+
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.08),
+            blurRadius: 20,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          // Avatar con nivel REAL
+          Stack(
+            children: [
+              Container(
+                width: 80,
+                height: 80,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: avatar.color,
+                  border: Border.all(color: Colors.white, width: 4),
+                  boxShadow: [
+                    BoxShadow(
+                      color: avatar.color.withOpacity(0.4),
+                      blurRadius: 12,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
                 ),
-                const Spacer(),
-                Text('$pct%', style: const TextStyle(color: Colors.grey)),
-              ],
-            ),
-            const SizedBox(height: 12),
-            ClipRRect(
-              borderRadius: BorderRadius.circular(999),
-              child: LinearProgressIndicator(
-                value: progress.clamp(0, 1),
-                minHeight: 10,
-                backgroundColor: Colors.grey.shade200,
-                color: Colors.deepOrange,
+                child: Center(
+                  child: Text(
+                    avatar.emoji,
+                    style: const TextStyle(fontSize: 36),
+                  ),
+                ),
               ),
-            ),
-            const SizedBox(height: 12),
-            Row(
+
+              // Badge de nivel
+              Positioned(
+                bottom: 0,
+                right: 0,
+                child: Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: Colors.deepOrange,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Colors.white, width: 2),
+                  ),
+                  child: Text(
+                    'Lv $level',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+
+          const SizedBox(width: 16),
+
+          // Info del usuario
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Icon(Icons.star, size: 18, color: Colors.amber),
-                const SizedBox(width: 8),
-                const Text('Explorador Urbano',
-                    style: TextStyle(fontWeight: FontWeight.w600)),
-                const Spacer(),
-                Text('XP: $xp / $xpGoal',
-                    style: const TextStyle(color: Colors.grey)),
+                Text(
+                  'Hola, ${profile.firstName.isNotEmpty ? profile.firstName : profile.username}!',
+                  style: const TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF2D3748),
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                ),
+
+                const SizedBox(height: 4),
+
+                Text(
+                  profile.fullName.isNotEmpty
+                      ? profile.fullName
+                      : profile.email,
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: Colors.grey.shade600,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                ),
+
+                const SizedBox(height: 8),
+
+                // Barra de progreso REAL
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          'Nivel $level',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.grey.shade700,
+                          ),
+                        ),
+                        Row(
+                          children: [
+                            const Icon(
+                              Icons.star,
+                              size: 14,
+                              color: Colors.amber,
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              '$xp XP',
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.grey.shade700,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(10),
+                      child: LinearProgressIndicator(
+                        value: progress,
+                        minHeight: 8,
+                        backgroundColor: Colors.grey.shade200,
+                        valueColor:
+                            const AlwaysStoppedAnimation(Colors.deepOrange),
+                      ),
+                    ),
+                  ],
+                ),
               ],
             ),
-            const SizedBox(height: 12),
-            Row(
-              children: const [
-                _CategoryIcon(icon: Icons.account_balance),
-                SizedBox(width: 8),
-                _CategoryIcon(icon: Icons.icecream),
-                SizedBox(width: 8),
-                _CategoryIcon(icon: Icons.restaurant),
-                SizedBox(width: 8),
-                _CategoryIcon(icon: Icons.camera_alt),
-              ],
-            )
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ==================== MAP CARD ====================
+class _MapCard extends StatelessWidget {
+  final UserProfile profile;
+
+  const _MapCard({required this.profile});
+
+  @override
+  Widget build(BuildContext context) {
+    // Calcular progreso del mapa (ejemplo basado en POIs visitados)
+    final totalPois = 50; // Esto debería venir de tu configuración
+    final discoveredPercent =
+        ((profile.totalPoisVisited / totalPois) * 100).clamp(0, 100).round();
+
+    return GestureDetector(
+      onTap: () {
+        MainScaffold.of(context)?.changeTab(1);
+      },
+      child: Container(
+        height: 280,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(24),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.1),
+              blurRadius: 20,
+              offset: const Offset(0, 6),
+            ),
           ],
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(24),
+          child: Stack(
+            children: [
+              // Fondo del mapa
+              Positioned.fill(
+                child: Container(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        Colors.blue.shade200,
+                        Colors.blue.shade100,
+                      ],
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                    ),
+                  ),
+                ),
+              ),
+              // Icono de mapa decorativo
+              Positioned.fill(
+                child: Opacity(
+                  opacity: 0.15,
+                  child: Icon(
+                    Icons.map_outlined,
+                    size: 200,
+                    color: Colors.blue.shade800,
+                  ),
+                ),
+              ),
+              // Indicador de ubicación central
+              Center(
+                child: Container(
+                  width: 60,
+                  height: 60,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.2),
+                        blurRadius: 15,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: const Icon(
+                    Icons.my_location,
+                    color: Colors.deepOrange,
+                    size: 32,
+                  ),
+                ),
+              ),
+              // Marcadores decorativos (POIs simulados)
+              Positioned(
+                top: 50,
+                left: 80,
+                child: _MapMarker(Icons.restaurant, Colors.orange.shade700),
+              ),
+              Positioned(
+                top: 70,
+                right: 70,
+                child: _MapMarker(Icons.account_balance, Colors.blue.shade700),
+              ),
+              Positioned(
+                bottom: 100,
+                left: 60,
+                child: _MapMarker(Icons.camera_alt, Colors.purple.shade700),
+              ),
+              Positioned(
+                bottom: 80,
+                right: 90,
+                child: _MapMarker(Icons.park, Colors.green.shade700),
+              ),
+              // Indicador de progreso
+              Positioned(
+                bottom: 20,
+                left: 20,
+                right: 20,
+                child: Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF2D3748),
+                    borderRadius: BorderRadius.circular(20),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.3),
+                        blurRadius: 10,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(
+                        Icons.explore,
+                        color: Colors.white,
+                        size: 20,
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Mapa Descubierto: $discoveredPercent%',
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 14,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(10),
+                              child: SizedBox(
+                                height: 6,
+                                child: LinearProgressIndicator(
+                                  value: discoveredPercent / 100,
+                                  backgroundColor:
+                                      Colors.white.withOpacity(0.3),
+                                  valueColor:
+                                      const AlwaysStoppedAnimation<Color>(
+                                    Colors.deepOrange,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
 }
 
-class _CategoryIcon extends StatelessWidget {
+class _MapMarker extends StatelessWidget {
   final IconData icon;
-  const _CategoryIcon({required this.icon});
+  final Color color;
+
+  const _MapMarker(this.icon, this.color);
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 44,
-      height: 36,
+      padding: const EdgeInsets.all(8),
       decoration: BoxDecoration(
-        color: const Color(0xFFF2F2F2),
-        borderRadius: BorderRadius.circular(10),
-      ),
-      child: Icon(icon, color: Colors.grey.shade700, size: 20),
-    );
-  }
-}
-
-class _MapPreviewCard extends StatelessWidget {
-  const _MapPreviewCard();
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: () {
-        MainScaffold.of(context)?.changeTab(1);
-
-      },
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(18),
-        child: Container(
-          height: 220,
-          color: Colors.grey.shade300,
-          child: Stack(
-            children: [
-              Positioned.fill(
-                child: Opacity(
-                  opacity: 0.35,
-                  child: Icon(Icons.map, size: 180, color: Colors.grey.shade700),
-                ),
-              ),
-              const Center(
-                child: Icon(Icons.my_location, size: 36, color: Colors.blue),
-              ),
-            ],
+        color: color,
+        shape: BoxShape.circle,
+        border: Border.all(color: Colors.white, width: 3),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.2),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
           ),
-        ),
+        ],
+      ),
+      child: Icon(icon, color: Colors.white, size: 16),
+    );
+  }
+}
+
+// ==================== STATS CARD ====================
+class _StatsCard extends StatelessWidget {
+  final UserProfile profile;
+
+  const _StatsCard({required this.profile});
+
+  @override
+  Widget build(BuildContext context) {
+    // Calcular progreso del mapa
+    final totalPois = 50;
+    final discoveredPercent =
+        ((profile.totalPoisVisited / totalPois) * 100).clamp(0, 100).round();
+
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.06),
+            blurRadius: 15,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: _StatItem(
+              icon: Icons.place,
+              color: Colors.blue,
+              label: 'Lugares\nVisitados',
+              value: '${profile.totalPoisVisited}',
+            ),
+          ),
+          Container(
+            width: 1,
+            height: 50,
+            color: Colors.grey.shade200,
+          ),
+          Expanded(
+            child: _StatItem(
+              icon: Icons.check_circle,
+              color: Colors.green,
+              label: 'Rutas\nCompletadas',
+              value: '${profile.totalRoutesCompleted}',
+            ),
+          ),
+          Container(
+            width: 1,
+            height: 50,
+            color: Colors.grey.shade200,
+          ),
+          Expanded(
+            child: _StatItem(
+              icon: Icons.emoji_events,
+              color: Colors.amber,
+              label: 'Logros',
+              value: '${profile.totalAchievements}',
+            ),
+          ),
+          Container(
+            width: 1,
+            height: 50,
+            color: Colors.grey.shade200,
+          ),
+          Expanded(
+            child: _StatItem(
+              icon: Icons.map,
+              color: Colors.deepOrange,
+              label: 'Mapa',
+              value: '$discoveredPercent%',
+            ),
+          ),
+        ],
       ),
     );
   }
 }
 
-class _QuickActionsRow extends StatelessWidget {
-  const _QuickActionsRow();
+class _StatItem extends StatelessWidget {
+  final IconData icon;
+  final Color color;
+  final String label;
+  final String value;
+
+  const _StatItem({
+    required this.icon,
+    required this.color,
+    required this.label,
+    required this.value,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return Row(
+    return Column(
       children: [
-        Expanded(
-          child: _ActionButton(
-            label: 'Explorar\ncerca',
-            icon: Icons.place,
-            color: Colors.deepOrange,
-            onTap: () {
-              MainScaffold.of(context)?.changeTab(1); // 1 = Map
-            },
+        Icon(icon, color: color, size: 28),
+        const SizedBox(height: 8),
+        Text(
+          value,
+          style: const TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+            color: Color(0xFF2D3748),
           ),
         ),
-        const SizedBox(width: 10),
-        Expanded(
-          child: _ActionButton(
-            label: 'Crear\nruta',
-            icon: Icons.add,
-            color: Colors.blue,
-            onTap: () {
-              // luego: ir a rutas/crear ruta
-            },
-          ),
-        ),
-        const SizedBox(width: 10),
-        Expanded(
-          child: _ActionButton(
-            label: 'Ver\nlugares',
-            icon: Icons.account_balance,
-            color: Colors.green,
-            onTap: () {
-              // luego: ir a lista de POIs
-            },
+        const SizedBox(height: 4),
+        Text(
+          label,
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            fontSize: 11,
+            color: Colors.grey.shade600,
+            height: 1.2,
           ),
         ),
       ],
     );
   }
-}
-
-class _ActionButton extends StatelessWidget {
-  final String label;
-  final IconData icon;
-  final Color color;
-  final VoidCallback? onTap;
-
-  const _ActionButton({
-    required this.label,
-    required this.icon,
-    required this.color,
-    this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      borderRadius: BorderRadius.circular(16),
-      onTap: onTap,
-      child: Container(
-        height: 64,
-        decoration: BoxDecoration(
-          color: color.withOpacity(0.15),
-          borderRadius: BorderRadius.circular(16),
-        ),
-        padding: const EdgeInsets.symmetric(horizontal: 12),
-        child: Row(
-          children: [
-            Container(
-              width: 34,
-              height: 34,
-              decoration: BoxDecoration(
-                color: color.withOpacity(0.25),
-                shape: BoxShape.circle,
-              ),
-              child: Icon(icon, color: color),
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Text(
-                label,
-                style: TextStyle(
-                  color: color,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _RecommendationCard extends StatelessWidget {
-  const _RecommendationCard();
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      elevation: 0.5,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Row(
-          children: [
-            const Icon(Icons.auto_awesome, color: Colors.amber),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: const [
-                  Text('Recomendado para hoy',
-                      style: TextStyle(color: Colors.grey)),
-                  SizedBox(height: 6),
-                  Text('Ruta histórica por Brera',
-                      style:
-                          TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                  SizedBox(height: 6),
-                  Text('2 h · 1,4 km · 5 lugares',
-                      style: TextStyle(color: Colors.grey)),
-                ],
-              ),
-            ),
-            const SizedBox(width: 10),
-            ElevatedButton(
-              onPressed: null, // luego: abrir detalle de ruta
-              style: ButtonStyle(
-                backgroundColor:
-                    WidgetStatePropertyAll<Color>(Colors.deepOrange),
-                foregroundColor: WidgetStatePropertyAll<Color>(Colors.white),
-              ),
-              child: const Text('Ver ruta'),
-            )
-          ],
-        ),
-      ),
-    );
-  }
-
 }

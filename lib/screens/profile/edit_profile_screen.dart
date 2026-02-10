@@ -338,6 +338,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
               prefixIcon: const Icon(Icons.person_outline, color: Colors.deepOrange),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
+                
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
@@ -363,8 +364,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 borderSide: const BorderSide(color: Colors.deepOrange, width: 2),
               ),
             ),
-            validator: (value) =>
-                value?.trim().isEmpty ?? true ? 'Enter your last name' : null,
           ),
           const SizedBox(height: 16),
           TextFormField(

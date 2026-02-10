@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'home/home_screen.dart';
 import 'map/map_screen.dart';
-import 'ranking/ranking_screen.dart';
 import 'profile/profile_screen.dart';
 import '../widgets/bottom_nav.dart';
 
@@ -52,7 +51,6 @@ class _MainScaffoldState extends State<MainScaffold> {
         children: const [
           HomeScreenContent(),
           MapScreenContent(),
-          RankingScreenContent(),
           ProfileScreenContent(),
         ],
       ),
@@ -70,7 +68,7 @@ class HomeScreenContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const HomeScreen(showBottomNav: false);
+    return const HomeScreen();
   }
 }
 
@@ -83,20 +81,11 @@ class MapScreenContent extends StatelessWidget {
   }
 }
 
-class RankingScreenContent extends StatelessWidget {
-  const RankingScreenContent({Key? key}) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return const RankingScreen(showBottomNav: false);
-  }
-}
-
 class ProfileScreenContent extends StatelessWidget {
   const ProfileScreenContent({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    return const ProfileScreen(showBottomNav: false);
+    return const ProfileScreen();
   }
 }

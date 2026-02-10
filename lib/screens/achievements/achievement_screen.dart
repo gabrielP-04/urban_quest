@@ -15,7 +15,7 @@ class _AchievementsScreenState extends State<AchievementsScreen>
     with SingleTickerProviderStateMixin {
   final _achievementService = AchievementService();
   late TabController _tabController;
-  
+
   bool _isLoading = true;
   List<AchievementProgress> _allProgress = [];
   AchievementCategory? _selectedCategory;
@@ -56,7 +56,7 @@ class _AchievementsScreenState extends State<AchievementsScreen>
       final totalPois = (userData['visitedPoiIds'] as List?)?.length ?? 0;
       final totalRoutes = (userData['completedRouteIds'] as List?)?.length ?? 0;
       final experiencePoints = userData['experiencePoints'] as int? ?? 0;
-      
+
       // Calcular nivel
       final currentLevel = (experiencePoints / 250).floor() + 1;
 
@@ -67,7 +67,8 @@ class _AchievementsScreenState extends State<AchievementsScreen>
         totalRoutesCompleted: totalRoutes,
         currentLevel: currentLevel,
         momentumActivations: userData['totalMomentumActivations'] as int? ?? 0,
-        hasReachedBlazingMomentum: userData['hasReachedBlazingMomentum'] as bool? ?? false,
+        hasReachedBlazingMomentum:
+            userData['hasReachedBlazingMomentum'] as bool? ?? false,
       );
 
       setState(() {
@@ -93,29 +94,47 @@ class _AchievementsScreenState extends State<AchievementsScreen>
 
   PreferredSizeWidget _buildAppBar() {
     return AppBar(
+      elevation: 0,
+      automaticallyImplyLeading: false,
+      leading: IconButton(
+        icon: const Icon(Icons.arrow_back, color: Color(0xFF5A5A5A)),
+        onPressed: () => Navigator.pop(context),
+      ),
       title: const Text(
         'Achievements',
-        style: TextStyle(fontWeight: FontWeight.bold),
-      ),
-      backgroundColor: Colors.deepOrange,
-      foregroundColor: Colors.white,
-      elevation: 0,
-      bottom: TabBar(
-        controller: _tabController,
-        indicatorColor: Colors.white,
-        indicatorWeight: 3,
-        labelStyle: const TextStyle(
-          fontSize: 15,
+        style: TextStyle(
+          color: Color(0xFF5A5A5A),
           fontWeight: FontWeight.bold,
+          fontSize: 20,
         ),
-        unselectedLabelStyle: const TextStyle(
-          fontSize: 15,
-          fontWeight: FontWeight.normal,
+      ),
+      centerTitle: true,
+      shadowColor: Colors.black.withOpacity(0.1),
+      backgroundColor: Colors.white,
+      bottom: PreferredSize(
+        preferredSize: const Size.fromHeight(48),
+        child: Container(
+          color: Colors.white,
+          child: TabBar(
+            controller: _tabController,
+            indicatorColor: Colors.deepOrange,
+            indicatorWeight: 3,
+            labelColor: Colors.deepOrange,
+            unselectedLabelColor: Colors.grey.shade600,
+            labelStyle: const TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.bold,
+            ),
+            unselectedLabelStyle: const TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.normal,
+            ),
+            tabs: const [
+              Tab(text: 'All'),
+              Tab(text: 'Unlocked'),
+            ],
+          ),
         ),
-        tabs: const [
-          Tab(text: 'All'),
-          Tab(text: 'Unlocked'),
-        ],
       ),
     );
   }
@@ -225,7 +244,8 @@ class _AchievementsScreenState extends State<AchievementsScreen>
         scrollDirection: Axis.horizontal,
         children: [
           _buildCategoryChip('All', null),
-          _buildCategoryChip('🗺️ Exploration', AchievementCategory.exploration),
+          _buildCategoryChip(
+              '🗺️ Exploration', AchievementCategory.exploration),
           _buildCategoryChip('🏛️ Culture', AchievementCategory.culture),
           _buildCategoryChip('🍕 Food', AchievementCategory.food),
           _buildCategoryChip('🚶 Routes', AchievementCategory.routes),
@@ -238,7 +258,7 @@ class _AchievementsScreenState extends State<AchievementsScreen>
 
   Widget _buildCategoryChip(String label, AchievementCategory? category) {
     final isSelected = _selectedCategory == category;
-    
+
     return Padding(
       padding: const EdgeInsets.only(right: 8),
       child: FilterChip(
@@ -408,9 +428,7 @@ class _AchievementsScreenState extends State<AchievementsScreen>
       width: 64,
       height: 64,
       decoration: BoxDecoration(
-        color: isUnlocked
-            ? rarityColor.withOpacity(0.15)
-            : Colors.grey[200],
+        color: isUnlocked ? rarityColor.withOpacity(0.15) : Colors.grey[200],
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
           color: isUnlocked ? rarityColor : Colors.grey[400]!,

@@ -16,7 +16,7 @@ class BottomNav extends StatelessWidget {
       decoration: BoxDecoration(
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.1),
+            color: Colors.black.withValues(alpha: 0.1),
             blurRadius: 8,
             offset: const Offset(0, -2),
           ),
@@ -24,15 +24,15 @@ class BottomNav extends StatelessWidget {
       ),
       child: BottomNavigationBar(
         currentIndex: currentIndex,
-        selectedItemColor: const Color(0xFFFF9A56), // Deep Orange
+        selectedItemColor: Colors.deepOrange, // Deep Orange
         unselectedItemColor: const Color(0xFFBDBDBD), // Gray
-        selectedFontSize: 12,
-        unselectedFontSize: 12,
+        selectedFontSize: 16,
+        unselectedFontSize: 16,
         type: BottomNavigationBarType.fixed,
         backgroundColor: Colors.white,
         elevation: 0,
         selectedLabelStyle: const TextStyle(
-          fontWeight: FontWeight.w600,
+          fontWeight: FontWeight.w900,
         ),
         items: const [
           BottomNavigationBarItem(
@@ -44,11 +44,6 @@ class BottomNav extends StatelessWidget {
             icon: Icon(Icons.map_outlined),
             activeIcon: Icon(Icons.map),
             label: 'Map',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.emoji_events_outlined),
-            activeIcon: Icon(Icons.emoji_events),
-            label: 'Progress',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.person_outline),

@@ -339,7 +339,7 @@ class _MapScreenState extends State<MapScreen> {
                 children: [
                   FlutterMap(
                     mapController: _mapController,
-                    options: MapOptions(
+                    options: const MapOptions(
                       initialCenter: _milanCenter,
                       initialZoom: 13,
                       minZoom: 10,
@@ -387,7 +387,7 @@ class _MapScreenState extends State<MapScreen> {
                   ),
                   _buildMapProgress(),
                   
-                  // TUS BOTONES ORIGINALES - SIN CAMBIOS
+                  // Botones zoom in - zoom out
                   Positioned(
                     right: 16,
                     bottom: 120,

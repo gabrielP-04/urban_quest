@@ -425,60 +425,105 @@ class _AccountSecurityScreenState extends State<AccountSecurityScreen> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                TextField(
-                  controller: currentPasswordController,
-                  obscureText: obscureCurrent,
-                  decoration: InputDecoration(
-                    labelText: 'Current password',
-                    border: const OutlineInputBorder(),
-                    prefixIcon: const Icon(Icons.lock_outline),
-                    suffixIcon: IconButton(
-                      icon: Icon(
-                        obscureCurrent
-                            ? Icons.visibility_off
-                            : Icons.visibility,
+                Container(
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(10),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.10),
+                        blurRadius: 10,
+                        offset: const Offset(0, 4),
                       ),
-                      onPressed: () {
-                        setState(() => obscureCurrent = !obscureCurrent);
-                      },
+                    ],
+                  ),
+                  child: TextField(
+                    controller: currentPasswordController,
+                    obscureText: obscureCurrent,
+                    decoration: InputDecoration(
+                      labelText: 'Current password',
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        borderSide: BorderSide.none,
+                      ),
+                      prefixIcon: const Icon(Icons.lock_outline),
+                      suffixIcon: IconButton(
+                        icon: Icon(
+                          obscureCurrent
+                              ? Icons.visibility_off
+                              : Icons.visibility,
+                        ),
+                        onPressed: () {
+                          setState(() => obscureCurrent = !obscureCurrent);
+                        },
+                      ),
                     ),
                   ),
                 ),
                 const SizedBox(height: 12),
-                TextField(
-                  controller: newPasswordController,
-                  obscureText: obscureNew,
-                  decoration: InputDecoration(
-                    labelText: 'New password',
-                    border: const OutlineInputBorder(),
-                    prefixIcon: const Icon(Icons.lock),
-                    suffixIcon: IconButton(
-                      icon: Icon(
-                        obscureNew ? Icons.visibility_off : Icons.visibility,
+                Container(
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(10),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.10),
+                        blurRadius: 10,
+                        offset: const Offset(0, 4),
                       ),
-                      onPressed: () {
-                        setState(() => obscureNew = !obscureNew);
-                      },
+                    ],
+                  ),
+                  child: TextField(
+                    controller: newPasswordController,
+                    obscureText: obscureNew,
+                    decoration: InputDecoration(
+                      labelText: 'New password',
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        borderSide: BorderSide.none,
+                      ),
+                      prefixIcon: const Icon(Icons.lock),
+                      suffixIcon: IconButton(
+                        icon: Icon(
+                          obscureNew ? Icons.visibility_off : Icons.visibility,
+                        ),
+                        onPressed: () {
+                          setState(() => obscureNew = !obscureNew);
+                        },
+                      ),
                     ),
                   ),
                 ),
                 const SizedBox(height: 12),
-                TextField(
-                  controller: confirmPasswordController,
-                  obscureText: obscureConfirm,
-                  decoration: InputDecoration(
-                    labelText: 'Confirm new password',
-                    border: const OutlineInputBorder(),
-                    prefixIcon: const Icon(Icons.lock),
-                    suffixIcon: IconButton(
-                      icon: Icon(
-                        obscureConfirm
-                            ? Icons.visibility_off
-                            : Icons.visibility,
+                Container(
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(10),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.10),
+                        blurRadius: 10,
+                        offset: const Offset(0, 4),
                       ),
-                      onPressed: () {
-                        setState(() => obscureConfirm = !obscureConfirm);
-                      },
+                    ],
+                  ),
+                  child: TextField(
+                    controller: confirmPasswordController,
+                    obscureText: obscureConfirm,
+                    decoration: InputDecoration(
+                      labelText: 'Confirm new password',
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        borderSide: BorderSide.none,
+                      ),
+                      prefixIcon: const Icon(Icons.lock),
+                      suffixIcon: IconButton(
+                        icon: Icon(
+                          obscureConfirm
+                              ? Icons.visibility_off
+                              : Icons.visibility,
+                        ),
+                        onPressed: () {
+                          setState(() => obscureConfirm = !obscureConfirm);
+                        },
+                      ),
                     ),
                   ),
                 ),

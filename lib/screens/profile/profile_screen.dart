@@ -6,27 +6,20 @@ import '../../models/user_profile.dart';
 import '../../core/utils/profile_assets.dart';
 import 'account_security_screen.dart';
 import 'edit_profile_screen.dart';
-
-// NUEVO: Importar gamificación
 import 'package:urban_quest/services/gamification_services.dart';
 import 'package:urban_quest/models/gamification_models.dart';
 
 class ProfileScreen extends StatelessWidget {
-  final bool showBottomNav;
 
-  const ProfileScreen({
-    Key? key,
-    this.showBottomNav = true,
-  }) : super(key: key);
+  const ProfileScreen({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     final authService = AuthService();
     final firestoreService = FirestoreService();
-    final userId = authService.currentUserId;
-
-    // NUEVO: Controller de gamificación
     final gamificationController = GamificationController();
+
+    final userId = authService.currentUserId;
 
     return Scaffold(
       appBar: AppBar(
@@ -101,7 +94,7 @@ class ProfileScreen extends StatelessWidget {
 
                 const SizedBox(height: 20),
 
-                // NUEVO: Estadísticas de gamificación
+                //Estadísticas de gamificación
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 20),
                   child: Text(
@@ -157,7 +150,7 @@ class ProfileScreen extends StatelessWidget {
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -199,7 +192,7 @@ class ProfileScreen extends StatelessWidget {
                       ),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.15),
+                          color: Colors.black.withValues(alpha: 0.15),
                           blurRadius: 15,
                           offset: const Offset(0, 5),
                         ),
@@ -610,31 +603,6 @@ class ProfileScreen extends StatelessWidget {
               );
             },
           ),
-          _buildDivider(),
-          _buildActivityItem(
-            icon: Icons.leaderboard_outlined,
-            iconColor: Colors.green,
-            title: 'Ranking',
-            subtitle: 'See your position',
-            onTap: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Ranking coming soon!')),
-              );
-            },
-          ),
-          _buildDivider(),
-          _buildActivityItem(
-            icon: Icons.route_outlined,
-            iconColor: Colors.deepOrange,
-            title: 'My Routes',
-            subtitle: '${profile.totalRoutesCompleted} completed',
-            onTap: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Routes coming soon!')),
-              );
-            },
-            isLast: true,
-          ),
         ],
       ),
     );
@@ -733,9 +701,6 @@ class ProfileScreen extends StatelessWidget {
             children: [
               _buildStatRow('✨', 'Total XP Earned', '${dashboard.totalXP}'),
               const SizedBox(height: 16),
-              _buildStatRow('🎯', 'Sessions Completed',
-                  '${dashboard.sessionStats.totalSessions}'),
-              const SizedBox(height: 16),
               _buildStatRow(
                   '📊',
                   'Avg POIs / Session',
@@ -794,18 +759,6 @@ class ProfileScreen extends StatelessWidget {
       ),
       child: Column(
         children: [
-          _buildSettingItem(
-            icon: Icons.notifications_outlined,
-            title: 'Notifications',
-            onTap: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                    content: Text('Notifications settings coming soon!')),
-              );
-            },
-            isFirst: true,
-          ),
-          _buildDivider(),
           _buildSettingItem(
             icon: Icons.shield_outlined,
             title: 'Account & Security',
