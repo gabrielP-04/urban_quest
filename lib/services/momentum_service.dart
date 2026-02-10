@@ -16,11 +16,6 @@ class MomentumService {
   
   static const double HIGH_MOMENTUM_MULTIPLIER = 1.5;  
 
-  // ============ MÉTODOS PRINCIPALES ============
-
-  /// Actualiza el momentum cuando el usuario visita un POI
-  /// Retorna información sobre el estado del momentum
-  /// Actualiza el momentum cuando el usuario visita un POI
   Future<MomentumState> updateMomentum(String userId) async {
     try {
       final userRef = _firestore.collection('users').doc(userId);
@@ -37,15 +32,9 @@ class MomentumService {
 
       final now = DateTime.now();
 
-      // If no active session or session has expired
       if (sessionStartTimestamp == null ||
           _isSessionExpired(sessionStartTimestamp.toDate(), now)) {
 
-        // =====================================================
-        // FIX: Save the expired session to history BEFORE resetting
-        // This is what makes "Avg POIs / Session" and
-        // "Sessions w/ Momentum" actually work.
-        // =====================================================
         if (sessionStartTimestamp != null && sessionPOIs > 0) {
           await _saveExpiredSession(
             userId: userId,
@@ -55,7 +44,6 @@ class MomentumService {
           );
         }
 
-        // Start new session
         await userRef.update({
           'currentSessionStart': FieldValue.serverTimestamp(),
           'currentSessionPOIs': 1,
@@ -71,16 +59,14 @@ class MomentumService {
         );
       }
 
-      // Active session - increment counter
       final newSessionPOIs = sessionPOIs + 1;
       final sessionStart = sessionStartTimestamp.toDate();
       final sessionDuration = now.difference(sessionStart);
 
-      // Determine momentum level
       final level = _calculateMomentumLevel(newSessionPOIs);
       final multiplier = _getMultiplier(level);
 
-      // Track momentum activations
+      
       if (level != MomentumLevel.none && sessionPOIs < MIN_POIS_FOR_MOMENTUM) {
         final currentActivations =
             userData['totalMomentumActivations'] as int? ?? 0;
@@ -89,7 +75,7 @@ class MomentumService {
         });
       }
 
-      // Track if reached Blazing
+      
       if (level == MomentumLevel.blazing) {
         await userRef.update({
           'hasReachedBlazingMomentum': true,
@@ -113,8 +99,8 @@ class MomentumService {
     }
   }
 
-  /// Saves an expired session to the sessions history sub-collection.
-  /// Called automatically when updateMomentum detects an expired session.
+  
+  
   Future<void> _saveExpiredSession({
     required String userId,
     required Timestamp sessionStart,
@@ -129,7 +115,7 @@ class MomentumService {
       final sessionDuration = sessionEndDate.difference(sessionStartDate);
       final hadMomentum = sessionPOIs >= MIN_POIS_FOR_MOMENTUM;
 
-      // Save to sessions sub-collection
+      
       await _firestore
           .collection('users')
           .doc(userId)
@@ -141,18 +127,18 @@ class MomentumService {
         'poisVisited': sessionPOIs,
         'xpEarned': sessionXP,
         'hadMomentum': hadMomentum,
-        'autoSaved': true, // flag to distinguish from manual endSession
+        'autoSaved': true, 
       });
 
       debugPrint('✅ Auto-saved expired session: $sessionPOIs POIs, '
           '${hadMomentum ? "with" : "without"} momentum');
     } catch (e) {
       debugPrint('❌ Error saving expired session: $e');
-      // Don't throw - this is a side effect, don't break the main flow
+      
     }
   }
 
-  /// Verifica si el usuario tiene momentum activo
+  
   Future<bool> hasMomentum(String userId) async {
     try {
       final userDoc = await _firestore.collection('users').doc(userId).get();
@@ -209,7 +195,7 @@ class MomentumService {
       final isExpired = _isSessionExpired(sessionStart, now);
 
       if (isExpired) {
-        // FIX: Auto-save expired session here too
+        
         if (sessionPOIs > 0) {
           await _saveExpiredSession(
             userId: userId,
@@ -218,7 +204,7 @@ class MomentumService {
             sessionXP: userData['currentSessionXP'] as int? ?? 0,
           );
 
-          // Clean up expired session fields
+          
           await _firestore.collection('users').doc(userId).update({
             'currentSessionStart': null,
             'currentSessionPOIs': 0,
