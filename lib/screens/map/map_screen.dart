@@ -851,7 +851,8 @@ class _MapScreenState extends State<MapScreen> {
                                 Navigator.pop(context);
                                 _markPoiAsVisited(poi);
                               },
-                              child: const Text('Mark as visited'),
+                              child: const Text('Mark as visited',
+                              style: TextStyle(color: Color.fromARGB(255, 255, 255, 255))),
                             ),
                           ),
                       ],
