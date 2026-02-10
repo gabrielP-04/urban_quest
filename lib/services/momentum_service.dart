@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/material.dart';
 
 /// Servicio que gestiona el "momentum" de exploración del usuario
 /// En lugar de rachas diarias, premia la actividad dentro de sesiones de viaje
@@ -27,6 +28,7 @@ class MomentumService {
 
   /// Actualiza el momentum cuando el usuario visita un POI
   /// Retorna información sobre el estado del momentum
+  /// Actualiza el momentum cuando el usuario visita un POI
   Future<MomentumState> updateMomentum(String userId) async {
     try {
       final userRef = _firestore.collection('users').doc(userId);
@@ -43,10 +45,25 @@ class MomentumService {
 
       final now = DateTime.now();
 
-      // Si no hay sesión activa o la sesión expiró
+      // If no active session or session has expired
       if (sessionStartTimestamp == null ||
           _isSessionExpired(sessionStartTimestamp.toDate(), now)) {
-        // Iniciar nueva sesión
+
+        // =====================================================
+        // FIX: Save the expired session to history BEFORE resetting
+        // This is what makes "Avg POIs / Session" and
+        // "Sessions w/ Momentum" actually work.
+        // =====================================================
+        if (sessionStartTimestamp != null && sessionPOIs > 0) {
+          await _saveExpiredSession(
+            userId: userId,
+            sessionStart: sessionStartTimestamp,
+            sessionPOIs: sessionPOIs,
+            sessionXP: userData['currentSessionXP'] as int? ?? 0,
+          );
+        }
+
+        // Start new session
         await userRef.update({
           'currentSessionStart': FieldValue.serverTimestamp(),
           'currentSessionPOIs': 1,
@@ -62,28 +79,25 @@ class MomentumService {
         );
       }
 
-      // Sesión activa - incrementar contador
+      // Active session - increment counter
       final newSessionPOIs = sessionPOIs + 1;
       final sessionStart = sessionStartTimestamp.toDate();
       final sessionDuration = now.difference(sessionStart);
 
-      // Determinar nivel de momentum
+      // Determine momentum level
       final level = _calculateMomentumLevel(newSessionPOIs);
       final multiplier = _getMultiplier(level);
 
-      // NUEVO: Trackear activaciones de momentum
+      // Track momentum activations
       if (level != MomentumLevel.none && sessionPOIs < MIN_POIS_FOR_MOMENTUM) {
-        // Primera activación de momentum en esta sesión
-        final userDoc = await userRef.get();
         final currentActivations =
-            userDoc.data()?['totalMomentumActivations'] as int? ?? 0;
-
+            userData['totalMomentumActivations'] as int? ?? 0;
         await userRef.update({
           'totalMomentumActivations': currentActivations + 1,
         });
       }
 
-      // NUEVO: Trackear si alcanzó Blazing momentum
+      // Track if reached Blazing
       if (level == MomentumLevel.blazing) {
         await userRef.update({
           'hasReachedBlazingMomentum': true,
@@ -104,6 +118,45 @@ class MomentumService {
       );
     } catch (e) {
       throw Exception('Error al actualizar momentum: $e');
+    }
+  }
+
+  /// Saves an expired session to the sessions history sub-collection.
+  /// Called automatically when updateMomentum detects an expired session.
+  Future<void> _saveExpiredSession({
+    required String userId,
+    required Timestamp sessionStart,
+    required int sessionPOIs,
+    required int sessionXP,
+  }) async {
+    try {
+      final sessionStartDate = sessionStart.toDate();
+      final sessionEndDate = sessionStartDate.add(
+        const Duration(hours: SESSION_DURATION_HOURS),
+      );
+      final sessionDuration = sessionEndDate.difference(sessionStartDate);
+      final hadMomentum = sessionPOIs >= MIN_POIS_FOR_MOMENTUM;
+
+      // Save to sessions sub-collection
+      await _firestore
+          .collection('users')
+          .doc(userId)
+          .collection('sessions')
+          .add({
+        'startTime': sessionStart,
+        'endTime': Timestamp.fromDate(sessionEndDate),
+        'duration': sessionDuration.inMinutes,
+        'poisVisited': sessionPOIs,
+        'xpEarned': sessionXP,
+        'hadMomentum': hadMomentum,
+        'autoSaved': true, // flag to distinguish from manual endSession
+      });
+
+      debugPrint('✅ Auto-saved expired session: $sessionPOIs POIs, '
+          '${hadMomentum ? "with" : "without"} momentum');
+    } catch (e) {
+      debugPrint('❌ Error saving expired session: $e');
+      // Don't throw - this is a side effect, don't break the main flow
     }
   }
 
@@ -130,7 +183,6 @@ class MomentumService {
     }
   }
 
-  /// Obtiene el estado actual del momentum
   Future<MomentumState> getMomentumState(String userId) async {
     try {
       final userDoc = await _firestore.collection('users').doc(userId).get();
@@ -165,6 +217,23 @@ class MomentumService {
       final isExpired = _isSessionExpired(sessionStart, now);
 
       if (isExpired) {
+        // FIX: Auto-save expired session here too
+        if (sessionPOIs > 0) {
+          await _saveExpiredSession(
+            userId: userId,
+            sessionStart: sessionStartTimestamp,
+            sessionPOIs: sessionPOIs,
+            sessionXP: userData['currentSessionXP'] as int? ?? 0,
+          );
+
+          // Clean up expired session fields
+          await _firestore.collection('users').doc(userId).update({
+            'currentSessionStart': null,
+            'currentSessionPOIs': 0,
+            'currentSessionXP': 0,
+          });
+        }
+
         return MomentumState(
           isActive: false,
           sessionPOIsVisited: 0,
