@@ -84,6 +84,7 @@ class ExperienceService {
       
       final updateData = {
         'experiencePoints': newXP,
+        'currentSessionXP': FieldValue.increment(finalXP),
         'lastXPGain': {
           'amount': finalXP,
           'baseAmount': baseXP,

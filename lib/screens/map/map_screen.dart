@@ -987,7 +987,6 @@ class _MapScreenState extends State<MapScreen> {
     }
   }
 
-  // NUEVO: Mostrar feedback de gamificación
   void _showGamificationFeedback(POIVisitResult result, Poi poi) {
     if (result.didLevelUp) {
       _showLevelUpDialog(result);
