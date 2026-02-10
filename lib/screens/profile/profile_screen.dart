@@ -7,6 +7,10 @@ import '../../core/utils/profile_assets.dart';
 import 'account_security_screen.dart';
 import 'edit_profile_screen.dart';
 
+// NUEVO: Importar gamificación
+import 'package:urban_quest/services/gamification_services.dart';
+import 'package:urban_quest/models/gamification_models.dart';
+
 class ProfileScreen extends StatelessWidget {
   final bool showBottomNav;
 
@@ -20,6 +24,9 @@ class ProfileScreen extends StatelessWidget {
     final authService = AuthService();
     final firestoreService = FirestoreService();
     final userId = authService.currentUserId;
+    
+    // NUEVO: Controller de gamificación
+    final gamificationController = GamificationController();
 
     return Scaffold(
       appBar: AppBar(
@@ -72,8 +79,8 @@ class ProfileScreen extends StatelessWidget {
 
                 const SizedBox(height: 10),
 
-                // CAPA 2 - TARJETA 1: Progress Card
-                _buildProgressCard(profile),
+                // CAPA 2 - TARJETA 1: Progress Card (ACTUALIZADA con gamificación real)
+                _buildProgressCard(profile, userId, gamificationController),
 
                 const SizedBox(height: 20),
 
@@ -89,7 +96,22 @@ class ProfileScreen extends StatelessWidget {
                 const SizedBox(height: 12),
 
                 // CAPA 2 - TARJETA 2: Achievements, Ranking, Routes
-                _buildActivityCard(context, profile),
+                _buildActivityCard(context, profile, userId, gamificationController),
+
+                const SizedBox(height: 20),
+
+                // NUEVO: Estadísticas de gamificación
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  child: Text(
+                    'Statistics',
+                    style: Theme.of(context).textTheme.titleMedium,
+                  ),
+                ),
+
+                const SizedBox(height: 12),
+
+                _buildStatisticsCard(userId, gamificationController),
 
                 const SizedBox(height: 20),
 
@@ -247,9 +269,8 @@ class ProfileScreen extends StatelessWidget {
                   style: const TextStyle(
                     fontSize: 22,
                     fontWeight: FontWeight.bold,
-                    color: Color(0xFF5A5A5A),
+                    color: Color(0xFF2C2C2C),
                   ),
-                  overflow: TextOverflow.ellipsis,
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 4),
@@ -261,52 +282,115 @@ class ProfileScreen extends StatelessWidget {
                     fontSize: 15,
                     color: Color(0xFF9E9E9E),
                   ),
-                  textAlign: TextAlign.center,
                 ),
-                const SizedBox(height: 12),
 
-                // Badge de título con icono
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  decoration: BoxDecoration(
-                    color: Colors.deepOrange.shade50,
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Text('🇮🇹', style: TextStyle(fontSize: 16)),
-                      const SizedBox(width: 8),
-                      Text(
-                        profile
-                            .profileTitle, // ✅ Mostrar el título personalizado del usuario
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: Colors.deepOrange.shade700,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ],
-                  ),
+                const SizedBox(height: 16),
+
+                // Stats rápidas
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    _buildQuickStat('${profile.totalPoisVisited}', 'POIs'),
+                    _buildVerticalDivider(),
+                    _buildQuickStat('${profile.totalRoutesCompleted}', 'Routes'),
+                    _buildVerticalDivider(),
+                    _buildQuickStat('${profile.totalAchievements}', 'Badges'),
+                  ],
                 ),
+
+                const SizedBox(height: 20),
               ],
             ),
           ),
-
-          const SizedBox(height: 20),
         ],
       ),
     );
   }
 
-  // ============ CAPA 2 - TARJETA 1: PROGRESS CARD ============
-  Widget _buildProgressCard(UserProfile profile) {
-    // Calcular nivel basado en XP (experiencePoints)
-    final level = (profile.experiencePoints / 1000).floor() + 1;
-    final currentLevelXp = profile.experiencePoints % 1000;
-    final progressPercent = currentLevelXp / 1000;
+  Widget _buildQuickStat(String value, String label) {
+    return Column(
+      children: [
+        Text(
+          value,
+          style: const TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+            color: Color(0xFF2C2C2C),
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 13,
+            color: Color(0xFF9E9E9E),
+          ),
+        ),
+      ],
+    );
+  }
 
+  Widget _buildVerticalDivider() {
+    return Container(
+      height: 40,
+      width: 1,
+      color: Colors.grey.shade300,
+    );
+  }
+
+  // ============ CAPA 2 - TARJETA 1: PROGRESS CARD (ACTUALIZADA) ============
+  Widget _buildProgressCard(UserProfile profile, String userId, GamificationController controller) {
+    return FutureBuilder<GamificationData>(
+      future: controller.experienceService.getUserGamificationData(userId),
+      builder: (context, snapshot) {
+        // Si está cargando o hay error, mostrar versión simplificada
+        if (!snapshot.hasData) {
+          final level = (profile.experiencePoints / 250).floor() + 1;
+          final currentLevelXP = profile.experiencePoints % 250;
+          final nextLevelXP = 250;
+          final progress = currentLevelXP / nextLevelXP;
+
+          return _buildProgressCardContent(level, currentLevelXP, nextLevelXP, progress, null);
+        }
+
+        final data = snapshot.data!;
+        
+        // NUEVO: Obtener momentum si está activo
+        return FutureBuilder<MomentumState>(
+          future: controller.momentumService.getMomentumState(userId),
+          builder: (context, momentumSnapshot) {
+            final momentum = momentumSnapshot.data;
+            
+            return Column(
+              children: [
+                _buildProgressCardContent(
+                  data.level,
+                  data.currentLevelXP,
+                  data.xpToNextLevel,
+                  data.progressToNextLevel,
+                  momentum,
+                ),
+                
+                // NUEVO: Card de momentum activo (solo si está activo)
+                if (momentum != null && momentum.isActive) ...[
+                  const SizedBox(height: 12),
+                  _buildMomentumCard(momentum),
+                ],
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Widget _buildProgressCardContent(
+    int level,
+    int currentLevelXP,
+    int xpToNextLevel,
+    double progress,
+    MomentumState? momentum,
+  ) {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16),
       padding: const EdgeInsets.all(20),
@@ -324,34 +408,25 @@ class ProfileScreen extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Header
+          // Level Title con icono
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text(
-                'Your Progress',
-                style: TextStyle(
+              const Text('👑', style: TextStyle(fontSize: 24)),
+              const SizedBox(width: 8),
+              Text(
+                'Level $level',
+                style: const TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
-                  color: Color(0xFF5A5A5A),
+                  color: Color(0xFF2C2C2C),
                 ),
               ),
-              Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [Color(0xFFFF9A56), Color(0xFFFF7A3D)],
-                  ),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Text(
-                  'Level $level',
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                  ),
+              const Spacer(),
+              Text(
+                _getLevelTitle(level),
+                style: const TextStyle(
+                  fontSize: 14,
+                  color: Color(0xFF9E9E9E),
                 ),
               ),
             ],
@@ -359,73 +434,53 @@ class ProfileScreen extends StatelessWidget {
 
           const SizedBox(height: 16),
 
-          // XP Progress bar
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    'XP: $currentLevelXp / 1000',
-                    style: const TextStyle(
-                      fontSize: 13,
-                      color: Color(0xFF9E9E9E),
-                    ),
+          // Progress Bar con gradiente
+          ClipRRect(
+            borderRadius: BorderRadius.circular(10),
+            child: Stack(
+              children: [
+                Container(
+                  height: 14,
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade200,
+                    borderRadius: BorderRadius.circular(10),
                   ),
-                  Text(
-                    '${(progressPercent * 100).toInt()}%',
-                    style: const TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.deepOrange,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 8),
-              ClipRRect(
-                borderRadius: BorderRadius.circular(10),
-                child: LinearProgressIndicator(
-                  value: progressPercent,
-                  minHeight: 12,
-                  backgroundColor: Colors.grey.shade200,
-                  valueColor:
-                      const AlwaysStoppedAnimation<Color>(Colors.deepOrange),
                 ),
-              ),
-            ],
+                FractionallySizedBox(
+                  widthFactor: progress,
+                  child: Container(
+                    height: 14,
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        colors: [Color(0xFFFF9A56), Color(0xFFFF7A3D)],
+                      ),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
 
-          const SizedBox(height: 20),
+          const SizedBox(height: 12),
 
-          // Stats Grid
+          // XP Details
           Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Expanded(
-                child: _buildStatItem(
-                  icon: Icons.emoji_events_outlined,
-                  value: profile.totalAchievements.toString(),
-                  label: 'Badges',
-                  color: Colors.amber,
+              Text(
+                '$currentLevelXP / $xpToNextLevel XP',
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: Color(0xFF5A5A5A),
                 ),
               ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: _buildStatItem(
-                  icon: Icons.route,
-                  value: profile.totalRoutesCompleted.toString(),
-                  label: 'Routes',
-                  color: Colors.blue,
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: _buildStatItem(
-                  icon: Icons.stars,
-                  value: profile.experiencePoints.toString(),
-                  label: 'Total XP',
-                  color: Colors.deepOrange,
+              Text(
+                'Level ${level + 1}',
+                style: const TextStyle(
+                  fontSize: 13,
+                  color: Color(0xFF9E9E9E),
                 ),
               ),
             ],
@@ -435,36 +490,58 @@ class ProfileScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildStatItem({
-    required IconData icon,
-    required String value,
-    required String label,
-    required Color color,
-  }) {
+  // NUEVO: Card de momentum activo
+  Widget _buildMomentumCard(MomentumState momentum) {
     return Container(
-      padding: const EdgeInsets.all(12),
+      margin: const EdgeInsets.symmetric(horizontal: 16),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(12),
+        gradient: const LinearGradient(
+          colors: [Color(0xFFFFE5D1), Color(0xFFFFD4B3)],
+        ),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: const Color(0xFFFF9A56),
+          width: 2,
+        ),
       ),
-      child: Column(
+      child: Row(
         children: [
-          Icon(icon, color: color, size: 24),
-          const SizedBox(height: 6),
           Text(
-            value,
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              color: color,
-            ),
+            momentum.level.icon,
+            style: const TextStyle(fontSize: 36),
           ),
-          const SizedBox(height: 2),
-          Text(
-            label,
-            style: const TextStyle(
-              fontSize: 11,
-              color: Color(0xFF9E9E9E),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  momentum.level.displayName,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFFFF7A3D),
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  '${momentum.sessionPOIsVisited} POIs this session',
+                  style: const TextStyle(
+                    fontSize: 13,
+                    color: Color(0xFF5A5A5A),
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  '+${((momentum.multiplier - 1) * 100).toInt()}% XP Bonus Active',
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFFFF7A3D),
+                  ),
+                ),
+              ],
             ),
           ),
         ],
@@ -472,8 +549,17 @@ class ProfileScreen extends StatelessWidget {
     );
   }
 
-  // ============ CAPA 2 - TARJETA 2: ACTIVITY CARD ============
-  Widget _buildActivityCard(BuildContext context, UserProfile profile) {
+  String _getLevelTitle(int level) {
+    if (level < 5) return 'Explorer';
+    if (level < 10) return 'Adventurer';
+    if (level < 15) return 'Navigator';
+    if (level < 20) return 'Voyager';
+    if (level < 25) return 'Master';
+    return 'Legend';
+  }
+
+  // ============ CAPA 2 - TARJETA 2: ACTIVITY (Achievements, Ranking, Routes) ============
+  Widget _buildActivityCard(BuildContext context, UserProfile profile, String userId, GamificationController controller) {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16),
       decoration: BoxDecoration(
@@ -490,26 +576,39 @@ class ProfileScreen extends StatelessWidget {
       child: Column(
         children: [
           _buildActivityItem(
-            icon: Icons.emoji_events,
-            iconColor: Colors.amber,
+            icon: Icons.emoji_events_outlined,
+            iconColor: Colors.deepOrange,
             title: 'Achievements',
-            subtitle: '${profile.totalAchievements} badges earned',
+            subtitle: '${profile.totalAchievements} unlocked',
             onTap: () {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (_) => AchievementsScreen(
-                    achievements: mockAchievements,
-                  ),
+                  builder: (context) => AchievementsScreen(achievements: mockAchievements),
                 ),
               );
             },
             isFirst: true,
           ),
           _buildDivider(),
+          // NUEVO: Item de recompensas
+          FutureBuilder<List<LevelReward>>(
+            future: _getUnlockedRewards(userId, controller),
+            builder: (context, snapshot) {
+              final rewardCount = snapshot.data?.length ?? 0;
+              return _buildActivityItem(
+                icon: Icons.card_giftcard_outlined,
+                iconColor: Colors.purple,
+                title: 'Rewards',
+                subtitle: '$rewardCount unlocked',
+                onTap: () => _showRewardsDialog(context, userId, controller),
+              );
+            },
+          ),
+          _buildDivider(),
           _buildActivityItem(
-            icon: Icons.leaderboard,
-            iconColor: Colors.blue,
+            icon: Icons.leaderboard_outlined,
+            iconColor: Colors.green,
             title: 'Ranking',
             subtitle: 'See your position',
             onTap: () {
@@ -596,6 +695,73 @@ class ProfileScreen extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+
+  // NUEVO: Card de estadísticas
+  Widget _buildStatisticsCard(String userId, GamificationController controller) {
+    return FutureBuilder<GamificationDashboard>(
+      future: controller.getUserDashboard(userId),
+      builder: (context, snapshot) {
+        if (!snapshot.hasData) {
+          return const SizedBox();
+        }
+
+        final dashboard = snapshot.data!;
+
+        return Container(
+          margin: const EdgeInsets.symmetric(horizontal: 16),
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(20),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.05),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Column(
+            children: [
+              _buildStatRow('✨', 'Total XP Earned', '${dashboard.totalXP}'),
+              const SizedBox(height: 16),
+              _buildStatRow('🎯', 'Sessions Completed', '${dashboard.sessionStats.totalSessions}'),
+              const SizedBox(height: 16),
+              _buildStatRow('📊', 'Avg POIs / Session', dashboard.sessionStats.averagePOIsPerSession.toStringAsFixed(1)),
+              const SizedBox(height: 16),
+              _buildStatRow('🔥', 'Sessions w/ Momentum', '${dashboard.sessionStats.sessionsWithMomentum}'),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildStatRow(String emoji, String label, String value) {
+    return Row(
+      children: [
+        Text(emoji, style: const TextStyle(fontSize: 24)),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Text(
+            label,
+            style: const TextStyle(
+              fontSize: 14,
+              color: Color(0xFF5A5A5A),
+            ),
+          ),
+        ),
+        Text(
+          value,
+          style: const TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+            color: Color(0xFFFF7A3D),
+          ),
+        ),
+      ],
     );
   }
 
@@ -776,6 +942,62 @@ class ProfileScreen extends StatelessWidget {
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  // ============ HELPER METHODS ============
+
+  Future<List<LevelReward>> _getUnlockedRewards(String userId, GamificationController controller) async {
+    final dashboard = await controller.getUserDashboard(userId);
+    return LevelRewardsSystem.getAllRewardsUpToLevel(dashboard.currentLevel);
+  }
+
+  void _showRewardsDialog(BuildContext context, String userId, GamificationController controller) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+        title: const Text('🏆 Unlocked Rewards'),
+        content: FutureBuilder<List<LevelReward>>(
+          future: _getUnlockedRewards(userId, controller),
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Center(child: CircularProgressIndicator());
+            }
+
+            if (!snapshot.hasData || snapshot.data!.isEmpty) {
+              return const Text('No rewards unlocked yet. Keep exploring!');
+            }
+
+            return SizedBox(
+              width: double.maxFinite,
+              child: ListView.builder(
+                shrinkWrap: true,
+                itemCount: snapshot.data!.length,
+                itemBuilder: (context, index) {
+                  final reward = snapshot.data![index];
+                  return ListTile(
+                    leading: Text(
+                      reward.icon ?? '🏆',
+                      style: const TextStyle(fontSize: 24),
+                    ),
+                    title: Text(reward.name),
+                    subtitle: Text('Level ${reward.level}'),
+                  );
+                },
+              ),
+            );
+          },
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Close'),
+          ),
+        ],
       ),
     );
   }

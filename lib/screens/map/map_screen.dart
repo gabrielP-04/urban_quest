@@ -221,75 +221,7 @@ class _MapScreenState extends State<MapScreen> {
         future: _getMomentumState(),
         builder: (context, snapshot) {
           if (snapshot.hasData && snapshot.data!.isActive) {
-            return Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [
-                    Colors.deepOrange.shade700,
-                    Colors.orange.shade600,
-                  ],
-                ),
-                borderRadius: BorderRadius.circular(12),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.deepOrange.withOpacity(0.4),
-                    blurRadius: 12,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(
-                    snapshot.data!.level.icon,
-                    style: const TextStyle(fontSize: 24),
-                  ),
-                  const SizedBox(width: 12),
-                  Flexible(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          snapshot.data!.level.displayName,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 16,
-                          ),
-                        ),
-                        Text(
-                          '+${((snapshot.data!.multiplier - 1) * 100).toInt()}% XP Bonus',
-                          style: TextStyle(
-                            color: Colors.white.withOpacity(0.9),
-                            fontSize: 13,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.2),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Text(
-                      '${snapshot.data!.sessionPOIsVisited} POIs',
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 12,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            );
+            return _buildMomentumBanner(snapshot.data!);
           }
           return const SizedBox();
         },
@@ -638,6 +570,84 @@ class _MapScreenState extends State<MapScreen> {
     );
   }
 
+  Widget _buildMomentumBanner(MomentumState momentum) {
+  // Si no está activo, no mostrar nada
+  if (!momentum.isActive) return const SizedBox.shrink();
+
+  return Positioned(
+    top: 16,
+    left: 16,
+    right: 16,
+    child: Container(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [Color(0xFFFF9A56), Color(0xFFFF7A3D)],
+        ),
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFFFF9A56).withOpacity(0.4),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          // Icono de fuego
+          Text(
+            momentum.level.icon,
+            style: const TextStyle(fontSize: 28),
+          ),
+          const SizedBox(width: 12),
+          // Información
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  momentum.level.displayName,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  '${momentum.sessionPOIsVisited} POIs this session',
+                  style: const TextStyle(
+                    fontSize: 13,
+                    color: Colors.white,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          // Bonus
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.25),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Text(
+              '+${((momentum.multiplier - 1) * 100).toInt()}% XP',
+              style: const TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+              ),
+            ),
+          ),
+        ],
+      ),
+    ),
+  );
+}
+
   // Tu SnackBar original para fallback
   void _showOriginalSnackbar(String poiName) {
     ScaffoldMessenger.of(context).showSnackBar(
@@ -654,28 +664,28 @@ class _MapScreenState extends State<MapScreen> {
   }
 
   Future<MomentumState> _getMomentumState() async {
-    final userId = FirebaseAuth.instance.currentUser?.uid;
-    if (userId == null) {
-      return MomentumState(
-        isActive: false,
-        sessionPOIsVisited: 0,
-        sessionDuration: Duration.zero,
-        multiplier: 1.0,
-        level: MomentumLevel.none,
-      );
-    }
-    
-    try {
-      return await _gamificationController.momentumService.getMomentumState(userId);
-    } catch (e) {
-      debugPrint('Error getting momentum state: $e');
-      return MomentumState(
-        isActive: false,
-        sessionPOIsVisited: 0,
-        sessionDuration: Duration.zero,
-        multiplier: 1.0,
-        level: MomentumLevel.none,
-      );
-    }
+  final userId = FirebaseAuth.instance.currentUser?.uid;
+  if (userId == null) {
+    return MomentumState(
+      isActive: false,
+      sessionPOIsVisited: 0,
+      sessionDuration: Duration.zero,
+      multiplier: 1.0,
+      level: MomentumLevel.none,
+    );
+  }
+  
+  try {
+    return await _gamificationController.momentumService.getMomentumState(userId);
+  } catch (e) {
+    return MomentumState(
+      isActive: false,
+      sessionPOIsVisited: 0,
+      sessionDuration: Duration.zero,
+      multiplier: 1.0,
+      level: MomentumLevel.none,
+    );
   }
 }
+}
+
