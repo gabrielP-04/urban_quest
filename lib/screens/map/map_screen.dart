@@ -18,6 +18,7 @@ import 'package:urban_quest/services/visited_poi_storage.dart';
 import 'package:urban_quest/widgets/exploration_progress.dart';
 import 'package:urban_quest/widgets/poi_marker.dart';
 import 'package:urban_quest/widgets/route_list_sheet.dart';
+import '../../widgets/achievement_unlocked_dialog.dart';
 
 import 'package:urban_quest/services/gamification_services.dart';
 import 'package:urban_quest/models/gamification_models.dart';
@@ -304,7 +305,6 @@ class _MapScreenState extends State<MapScreen> {
       _routeDurationSeconds = 0;
     });
 
-    // 👇 AQUÍ está la clave
     final orderedPois = _optimizePoisOrder(route.pois);
 
     for (int i = 0; i < orderedPois.length - 1; i++) {
@@ -789,65 +789,84 @@ class _MapScreenState extends State<MapScreen> {
   }
 
   // MODIFICADO: Integración con gamificación
-  void _markPoiAsVisited(Poi poi) async {
-    debugPrint('🔵 [MAP] markPoiAsVisited called for: ${poi.name} (${poi.id})');
-    
-    final isFirstVisit = !_visitedPoiIds.contains(poi.id);
-    debugPrint('🔵 [MAP] Is first visit: $isFirstVisit');
-    
-    // 1. Actualizar UI local (tu código original)
+  Future<void> _markPoiAsVisited(Poi poi) async {
+    final userId = FirebaseAuth.instance.currentUser?.uid;
+    if (userId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please log in first')),
+      );
+      return;
+    }
+
+    // Si ya fue visitado, no hacer nada
+    if (_visitedPoiIds.contains(poi.id)) {
+      return;
+    }
+
+    // Actualizar UI inmediatamente
     setState(() {
       _visitedPoiIds.add(poi.id);
       _nearbyPoi = null;
     });
-    debugPrint('🔵 [MAP] Added to local set. Total visited: ${_visitedPoiIds.length}');
 
-    if (_hasActiveRoute && _visitedCount == _totalPois) {
+    try {
+      // Usar el GamificationController para procesar la visita (YA INTEGRADO CON ACHIEVEMENTS)
+      final result = await _gamificationController.processPOIVisit(
+        userId: userId,
+        poiId: poi.id,
+        poiName: poi.name,
+        poiCategory: poi.category, // Importante para achievements por categoría
+        isFirstVisit: true,
+      );
+
+      // Guardar en SharedPreferences (backup local)
+      await VisitedPoiStorage.saveVisitedPoiIds(_visitedPoiIds);
+
+      if (!mounted) return;
+
+      // Mostrar mensaje de POI visitado con XP
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('🎉 Route completed!'),
-          backgroundColor: Colors.deepOrange,
+        SnackBar(
+          content: Text('${poi.name} visited! +${result.xpGained} XP'),
+          backgroundColor: Colors.green,
+          duration: const Duration(seconds: 2),
         ),
       );
 
-      setState(() {
-        _activeRoute = null;
-        _realRoutePoints.clear();
-        _routeDistanceMeters = 0;
-        _routeDurationSeconds = 0;
-      });
+      // Esperar un poco antes de mostrar achievements
+      await Future.delayed(const Duration(milliseconds: 500));
 
-      await ActiveRouteStorage.clearActiveRoute();
-    }
-
-    // 2. Guardar localmente (tu código original)
-    await VisitedPoiStorage.saveVisitedPoiIds(_visitedPoiIds);
-    debugPrint('🔵 [MAP] Saved to local storage');
-    
-    // 3. NUEVO: Guardar en Firestore
-    await PoiService.markPoiAsVisitedInFirestore(poi.id);
-    debugPrint('🔵 [MAP] Saved to Firestore');
-
-    // 4. NUEVO: Procesar gamificación
-    try {
-      final userId = FirebaseAuth.instance.currentUser?.uid;
-      if (userId != null) {
-        debugPrint('🔵 [MAP] Processing gamification for user: $userId');
-        final result = await _gamificationController.processPOIVisit(
-          userId: userId,
-          poiId: poi.id,
-          poiName: poi.name,
-          isFirstVisit: isFirstVisit,
+      // Si se desbloquearon achievements, mostrarlos
+      if (result.hasNewAchievements && mounted) {
+        AchievementUnlockedDialog.showMultiple(
+          context,
+          result.newAchievements,
         );
+      }
 
-        _showGamificationFeedback(result, poi);
-      } else {
-        debugPrint('⚠️ [MAP] No user authenticated, showing simple snackbar');
-        _showOriginalSnackbar(poi.name);
+      // Si hubo level-up, también mostrarlo
+      if (result.didLevelUp && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              '🎉 Level Up! You are now level ${result.gamificationData.level}',
+            ),
+            backgroundColor: Colors.deepOrange,
+            duration: const Duration(seconds: 3),
+          ),
+        );
       }
     } catch (e) {
-      debugPrint('❌ [MAP] Error en gamificación: $e');
-      _showOriginalSnackbar(poi.name);
+      debugPrint('Error al marcar POI como visitado: $e');
+      
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     }
   }
 

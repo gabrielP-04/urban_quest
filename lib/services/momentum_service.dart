@@ -5,21 +5,21 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 /// Más apropiado para una app de turismo donde el uso es esporádico
 class MomentumService {
   final FirebaseFirestore _firestore;
-  
+
   MomentumService({FirebaseFirestore? firestore})
       : _firestore = firestore ?? FirebaseFirestore.instance;
 
   // ============ CONSTANTES ============
-  
+
   /// Horas para considerar una "sesión activa" (6 horas)
   static const int SESSION_DURATION_HOURS = 6;
-  
+
   /// POIs necesarios para activar momentum
   static const int MIN_POIS_FOR_MOMENTUM = 3;
-  
+
   /// Multiplicador de XP cuando hay momentum activo
   static const double MOMENTUM_MULTIPLIER = 1.3; // +30%
-  
+
   /// Multiplicador extra por sesión muy productiva (5+ POIs)
   static const double HIGH_MOMENTUM_MULTIPLIER = 1.5; // +50%
 
@@ -31,19 +31,20 @@ class MomentumService {
     try {
       final userRef = _firestore.collection('users').doc(userId);
       final userDoc = await userRef.get();
-      
+
       if (!userDoc.exists) {
         throw Exception('Usuario no encontrado: $userId');
       }
 
       final userData = userDoc.data()!;
-      final sessionStartTimestamp = userData['currentSessionStart'] as Timestamp?;
+      final sessionStartTimestamp =
+          userData['currentSessionStart'] as Timestamp?;
       final sessionPOIs = userData['currentSessionPOIs'] as int? ?? 0;
-      
+
       final now = DateTime.now();
-      
+
       // Si no hay sesión activa o la sesión expiró
-      if (sessionStartTimestamp == null || 
+      if (sessionStartTimestamp == null ||
           _isSessionExpired(sessionStartTimestamp.toDate(), now)) {
         // Iniciar nueva sesión
         await userRef.update({
@@ -51,7 +52,7 @@ class MomentumService {
           'currentSessionPOIs': 1,
           'currentSessionXP': 0,
         });
-        
+
         return MomentumState(
           isActive: false,
           sessionPOIsVisited: 1,
@@ -65,16 +66,35 @@ class MomentumService {
       final newSessionPOIs = sessionPOIs + 1;
       final sessionStart = sessionStartTimestamp.toDate();
       final sessionDuration = now.difference(sessionStart);
-      
+
       // Determinar nivel de momentum
       final level = _calculateMomentumLevel(newSessionPOIs);
       final multiplier = _getMultiplier(level);
-      
+
+      // NUEVO: Trackear activaciones de momentum
+      if (level != MomentumLevel.none && sessionPOIs < MIN_POIS_FOR_MOMENTUM) {
+        // Primera activación de momentum en esta sesión
+        final userDoc = await userRef.get();
+        final currentActivations =
+            userDoc.data()?['totalMomentumActivations'] as int? ?? 0;
+
+        await userRef.update({
+          'totalMomentumActivations': currentActivations + 1,
+        });
+      }
+
+      // NUEVO: Trackear si alcanzó Blazing momentum
+      if (level == MomentumLevel.blazing) {
+        await userRef.update({
+          'hasReachedBlazingMomentum': true,
+        });
+      }
+
       await userRef.update({
         'currentSessionPOIs': newSessionPOIs,
         'lastActivityTime': FieldValue.serverTimestamp(),
       });
-      
+
       return MomentumState(
         isActive: level != MomentumLevel.none,
         sessionPOIsVisited: newSessionPOIs,
@@ -91,18 +111,19 @@ class MomentumService {
   Future<bool> hasMomentum(String userId) async {
     try {
       final userDoc = await _firestore.collection('users').doc(userId).get();
-      
+
       if (!userDoc.exists) return false;
-      
+
       final userData = userDoc.data()!;
-      final sessionStartTimestamp = userData['currentSessionStart'] as Timestamp?;
+      final sessionStartTimestamp =
+          userData['currentSessionStart'] as Timestamp?;
       final sessionPOIs = userData['currentSessionPOIs'] as int? ?? 0;
-      
+
       if (sessionStartTimestamp == null) return false;
-      
+
       final sessionStart = sessionStartTimestamp.toDate();
       final isExpired = _isSessionExpired(sessionStart, DateTime.now());
-      
+
       return !isExpired && sessionPOIs >= MIN_POIS_FOR_MOMENTUM;
     } catch (e) {
       return false;
@@ -113,7 +134,7 @@ class MomentumService {
   Future<MomentumState> getMomentumState(String userId) async {
     try {
       final userDoc = await _firestore.collection('users').doc(userId).get();
-      
+
       if (!userDoc.exists) {
         return MomentumState(
           isActive: false,
@@ -123,11 +144,12 @@ class MomentumService {
           level: MomentumLevel.none,
         );
       }
-      
+
       final userData = userDoc.data()!;
-      final sessionStartTimestamp = userData['currentSessionStart'] as Timestamp?;
+      final sessionStartTimestamp =
+          userData['currentSessionStart'] as Timestamp?;
       final sessionPOIs = userData['currentSessionPOIs'] as int? ?? 0;
-      
+
       if (sessionStartTimestamp == null) {
         return MomentumState(
           isActive: false,
@@ -137,11 +159,11 @@ class MomentumService {
           level: MomentumLevel.none,
         );
       }
-      
+
       final sessionStart = sessionStartTimestamp.toDate();
       final now = DateTime.now();
       final isExpired = _isSessionExpired(sessionStart, now);
-      
+
       if (isExpired) {
         return MomentumState(
           isActive: false,
@@ -151,11 +173,11 @@ class MomentumService {
           level: MomentumLevel.none,
         );
       }
-      
+
       final sessionDuration = now.difference(sessionStart);
       final level = _calculateMomentumLevel(sessionPOIs);
       final multiplier = _getMultiplier(level);
-      
+
       return MomentumState(
         isActive: level != MomentumLevel.none,
         sessionPOIsVisited: sessionPOIs,
@@ -173,16 +195,17 @@ class MomentumService {
     try {
       final userRef = _firestore.collection('users').doc(userId);
       final userDoc = await userRef.get();
-      
+
       if (!userDoc.exists) {
         throw Exception('Usuario no encontrado: $userId');
       }
-      
+
       final userData = userDoc.data()!;
-      final sessionStartTimestamp = userData['currentSessionStart'] as Timestamp?;
+      final sessionStartTimestamp =
+          userData['currentSessionStart'] as Timestamp?;
       final sessionPOIs = userData['currentSessionPOIs'] as int? ?? 0;
       final sessionXP = userData['currentSessionXP'] as int? ?? 0;
-      
+
       if (sessionStartTimestamp == null) {
         return SessionSummary(
           poisVisited: 0,
@@ -191,11 +214,11 @@ class MomentumService {
           hadMomentum: false,
         );
       }
-      
+
       final sessionStart = sessionStartTimestamp.toDate();
       final sessionDuration = DateTime.now().difference(sessionStart);
       final hadMomentum = sessionPOIs >= MIN_POIS_FOR_MOMENTUM;
-      
+
       // Guardar sesión en historial
       await _firestore
           .collection('users')
@@ -209,7 +232,7 @@ class MomentumService {
         'xpEarned': sessionXP,
         'hadMomentum': hadMomentum,
       });
-      
+
       // Limpiar sesión actual
       await userRef.update({
         'currentSessionStart': null,
@@ -218,7 +241,7 @@ class MomentumService {
         'lastSessionPOIs': sessionPOIs,
         'lastSessionDate': FieldValue.serverTimestamp(),
       });
-      
+
       return SessionSummary(
         poisVisited: sessionPOIs,
         duration: sessionDuration,
@@ -240,12 +263,12 @@ class MomentumService {
           .orderBy('endTime', descending: true)
           .limit(20)
           .get();
-      
+
       int totalSessions = sessionsSnapshot.docs.length;
       int totalPOIs = 0;
       int sessionsWithMomentum = 0;
       Duration totalDuration = Duration.zero;
-      
+
       for (var doc in sessionsSnapshot.docs) {
         final data = doc.data();
         totalPOIs += data['poisVisited'] as int? ?? 0;
@@ -254,12 +277,13 @@ class MomentumService {
           sessionsWithMomentum++;
         }
       }
-      
-      final avgPOIsPerSession = totalSessions > 0 ? totalPOIs / totalSessions : 0.0;
-      final avgDuration = totalSessions > 0 
+
+      final avgPOIsPerSession =
+          totalSessions > 0 ? totalPOIs / totalSessions : 0.0;
+      final avgDuration = totalSessions > 0
           ? Duration(minutes: (totalDuration.inMinutes / totalSessions).round())
           : Duration.zero;
-      
+
       return SessionStats(
         totalSessions: totalSessions,
         totalPOIsVisited: totalPOIs,
@@ -338,16 +362,16 @@ enum MomentumLevel {
 class MomentumState {
   /// Indica si el momentum está activo
   final bool isActive;
-  
+
   /// POIs visitados en la sesión actual
   final int sessionPOIsVisited;
-  
+
   /// Duración de la sesión actual
   final Duration sessionDuration;
-  
+
   /// Multiplicador de XP activo
   final double multiplier;
-  
+
   /// Nivel de momentum
   final MomentumLevel level;
 
@@ -436,7 +460,9 @@ class SessionStats {
 
   /// Porcentaje de sesiones con momentum
   double get momentumRate {
-    return totalSessions > 0 ? (sessionsWithMomentum / totalSessions) * 100 : 0.0;
+    return totalSessions > 0
+        ? (sessionsWithMomentum / totalSessions) * 100
+        : 0.0;
   }
 
   Map<String, dynamic> toMap() {

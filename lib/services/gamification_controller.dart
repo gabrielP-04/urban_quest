@@ -1,27 +1,33 @@
 import '../models/gamification_models.dart';
+import '../models/achievement.dart';
 import 'experience_service.dart';
 import 'momentum_service.dart';
+import 'achievement_service.dart';
 
 /// Controlador principal que coordina todos los servicios de gamificación
-/// Este es el punto de entrada recomendado para interactuar con el sistema
+/// Versión extendida con soporte para Achievements
 class GamificationController {
   final ExperienceService _experienceService;
   final MomentumService _momentumService;
+  final AchievementService _achievementService;
   
   GamificationController({
     ExperienceService? experienceService,
     MomentumService? momentumService,
+    AchievementService? achievementService,
   })  : _experienceService = experienceService ?? ExperienceService(),
-        _momentumService = momentumService ?? MomentumService();
+        _momentumService = momentumService ?? MomentumService(),
+        _achievementService = achievementService ?? AchievementService();
 
-  // ============ MÉTODOS DE ALTO NIVEL ============
+  // ============ MÉTODOS DE ALTO NIVEL CON ACHIEVEMENTS ============
 
-  /// Procesa la visita de un usuario a un POI
+  /// Procesa la visita de un usuario a un POI (con achievements)
   /// Maneja toda la lógica de gamificación relacionada
   Future<POIVisitResult> processPOIVisit({
     required String userId,
     required String poiId,
     required String poiName,
+    String? poiCategory,
     bool isFirstVisit = true,
   }) async {
     try {
@@ -38,21 +44,45 @@ class GamificationController {
         momentumMultiplier: momentumState.multiplier,
       );
 
-      // 3. Obtener información actualizada
+      // 3. Obtener información actualizada del usuario
       final gamificationData = await _experienceService.getUserGamificationData(userId);
+      
+      // 4. NUEVO: Verificar achievements desbloqueados
+      final userDoc = await _achievementService.firestore.collection('users').doc(userId).get();
+      final userData = userDoc.data()!;
+      
+      final totalPois = (userData['visitedPoiIds'] as List?)?.length ?? 0;
+      final totalRoutes = (userData['completedRouteIds'] as List?)?.length ?? 0;
+      
+      // Calcular progreso por categoría (simplificado - puedes mejorarlo)
+      final categoryProgress = <String, int>{};
+      if (poiCategory != null) {
+        categoryProgress[poiCategory] = (categoryProgress[poiCategory] ?? 0) + 1;
+      }
+      
+      final newAchievements = await _achievementService.checkAndUnlockAchievements(
+        userId: userId,
+        totalPoisVisited: totalPois,
+        totalRoutesCompleted: totalRoutes,
+        currentLevel: gamificationData.level,
+        categoryProgress: categoryProgress,
+        momentumActivations: userData['totalMomentumActivations'] as int? ?? 0,
+        hasReachedBlazingMomentum: userData['hasReachedBlazingMomentum'] as bool? ?? false,
+      );
 
       return POIVisitResult(
         xpResult: xpResult,
         gamificationData: gamificationData,
         momentumState: momentumState,
         isFirstVisit: isFirstVisit,
+        newAchievements: newAchievements, // NUEVO
       );
     } catch (e) {
       throw Exception('Error al procesar visita a POI: $e');
     }
   }
 
-  /// Procesa la finalización de una ruta
+  /// Procesa la finalización de una ruta (con achievements)
   Future<RouteCompletionResult> processRouteCompletion({
     required String userId,
     required String routeId,
@@ -74,7 +104,7 @@ class GamificationController {
         momentumMultiplier: momentumState.multiplier,
       );
 
-      // 3. Bonus adicional por número de POIs (opcional)
+      // 3. Bonus adicional por número de POIs
       if (poisVisited >= 10) {
         await _experienceService.awardExperience(
           userId: userId,
@@ -86,6 +116,20 @@ class GamificationController {
 
       // 4. Obtener información actualizada
       final gamificationData = await _experienceService.getUserGamificationData(userId);
+      
+      // 5. NUEVO: Verificar achievements
+      final userDoc = await _achievementService.firestore.collection('users').doc(userId).get();
+      final userData = userDoc.data()!;
+      
+      final totalPois = (userData['visitedPoiIds'] as List?)?.length ?? 0;
+      final totalRoutes = (userData['completedRouteIds'] as List?)?.length ?? 0;
+      
+      final newAchievements = await _achievementService.checkAndUnlockAchievements(
+        userId: userId,
+        totalPoisVisited: totalPois,
+        totalRoutesCompleted: totalRoutes,
+        currentLevel: gamificationData.level,
+      );
 
       return RouteCompletionResult(
         xpResult: xpResult,
@@ -93,23 +137,22 @@ class GamificationController {
         momentumState: momentumState,
         poisVisited: poisVisited,
         isFirstTime: isFirstTime,
+        newAchievements: newAchievements, // NUEVO
       );
     } catch (e) {
       throw Exception('Error al procesar finalización de ruta: $e');
     }
   }
 
-  /// Procesa el login diario del usuario (bonus simple)
+  /// Procesa el login diario del usuario
   Future<DailyLoginResult> processDailyLogin({
     required String userId,
   }) async {
     try {
-      // Otorgar XP por login diario
       final xpResult = await _experienceService.awardDailyLogin(
         userId: userId,
       );
 
-      // Obtener información actualizada
       final gamificationData = await _experienceService.getUserGamificationData(userId);
       final momentumState = await _momentumService.getMomentumState(userId);
 
@@ -123,9 +166,9 @@ class GamificationController {
     }
   }
 
-  // ============ MÉTODOS DE CONSULTA ============
+  // ============ MÉTODOS DE CONSULTA CON ACHIEVEMENTS ============
 
-  /// Obtiene el dashboard completo de gamificación del usuario
+  /// Obtiene el dashboard completo de gamificación del usuario (con achievements)
   Future<GamificationDashboard> getUserDashboard(String userId) async {
     try {
       final gamificationData = await _experienceService.getUserGamificationData(userId);
@@ -139,6 +182,19 @@ class GamificationController {
           ? LevelRewardsSystem.getRewardsForLevel(nextRewardLevel)
           : <LevelReward>[];
 
+      // NUEVO: Obtener achievements
+      final userDoc = await _achievementService.firestore.collection('users').doc(userId).get();
+      final userData = userDoc.data()!;
+      final totalPois = (userData['visitedPoiIds'] as List?)?.length ?? 0;
+      final totalRoutes = (userData['completedRouteIds'] as List?)?.length ?? 0;
+      
+      final achievementProgress = await _achievementService.getAchievementProgress(
+        userId: userId,
+        totalPoisVisited: totalPois,
+        totalRoutesCompleted: totalRoutes,
+        currentLevel: gamificationData.level,
+      );
+
       return GamificationDashboard(
         gamificationData: gamificationData,
         momentumState: momentumState,
@@ -146,6 +202,7 @@ class GamificationController {
         xpStatsBySource: xpStats,
         nextRewardLevel: nextRewardLevel,
         nextRewards: nextRewards,
+        achievementProgress: achievementProgress, // NUEVO
       );
     } catch (e) {
       throw Exception('Error al obtener dashboard: $e');
@@ -169,43 +226,71 @@ class GamificationController {
     }
   }
 
+  /// NUEVO: Obtiene el progreso de achievements
+  Future<List<AchievementProgress>> getAchievementProgress(String userId) async {
+    try {
+      final userDoc = await _achievementService.firestore.collection('users').doc(userId).get();
+      final userData = userDoc.data()!;
+      
+      final totalPois = (userData['visitedPoiIds'] as List?)?.length ?? 0;
+      final totalRoutes = (userData['completedRouteIds'] as List?)?.length ?? 0;
+      final gamificationData = await _experienceService.getUserGamificationData(userId);
+      
+      return await _achievementService.getAchievementProgress(
+        userId: userId,
+        totalPoisVisited: totalPois,
+        totalRoutesCompleted: totalRoutes,
+        currentLevel: gamificationData.level,
+      );
+    } catch (e) {
+      throw Exception('Error al obtener progreso de achievements: $e');
+    }
+  }
+
+  /// NUEVO: Obtiene solo achievements desbloqueados
+  Future<List<Achievement>> getUnlockedAchievements(String userId) async {
+    return await _achievementService.getUnlockedAchievements(userId);
+  }
+
   // ============ ACCESO DIRECTO A SERVICIOS ============
 
-  /// Acceso al servicio de experiencia para operaciones avanzadas
   ExperienceService get experienceService => _experienceService;
-
-  /// Acceso al servicio de momentum para operaciones avanzadas
   MomentumService get momentumService => _momentumService;
+  AchievementService get achievementService => _achievementService; // NUEVO
 }
 
-// ============ MODELOS DE RESULTADO ============
+// ============ MODELOS DE RESULTADO EXTENDIDOS ============
 
-/// Resultado de procesar una visita a POI
+/// Resultado de procesar una visita a POI (CON ACHIEVEMENTS)
 class POIVisitResult {
   final LevelUpResult xpResult;
   final GamificationData gamificationData;
   final MomentumState momentumState;
   final bool isFirstVisit;
+  final List<Achievement> newAchievements; // NUEVO
 
   POIVisitResult({
     required this.xpResult,
     required this.gamificationData,
     required this.momentumState,
     required this.isFirstVisit,
+    this.newAchievements = const [], // NUEVO
   });
 
   bool get didLevelUp => xpResult.didLevelUp;
   int get xpGained => xpResult.xpGained;
   bool get hasMomentum => momentumState.isActive;
+  bool get hasNewAchievements => newAchievements.isNotEmpty; // NUEVO
 }
 
-/// Resultado de completar una ruta
+/// Resultado de completar una ruta (CON ACHIEVEMENTS)
 class RouteCompletionResult {
   final LevelUpResult xpResult;
   final GamificationData gamificationData;
   final MomentumState momentumState;
   final int poisVisited;
   final bool isFirstTime;
+  final List<Achievement> newAchievements; // NUEVO
 
   RouteCompletionResult({
     required this.xpResult,
@@ -213,11 +298,13 @@ class RouteCompletionResult {
     required this.momentumState,
     required this.poisVisited,
     required this.isFirstTime,
+    this.newAchievements = const [], // NUEVO
   });
 
   bool get didLevelUp => xpResult.didLevelUp;
   int get xpGained => xpResult.xpGained;
   bool get hasMomentum => momentumState.isActive;
+  bool get hasNewAchievements => newAchievements.isNotEmpty; // NUEVO
 }
 
 /// Resultado de login diario
@@ -236,7 +323,7 @@ class DailyLoginResult {
   int get xpGained => xpResult.xpGained;
 }
 
-/// Dashboard de gamificación
+/// Dashboard de gamificación (CON ACHIEVEMENTS)
 class GamificationDashboard {
   final GamificationData gamificationData;
   final MomentumState momentumState;
@@ -244,6 +331,7 @@ class GamificationDashboard {
   final Map<XPSourceType, int> xpStatsBySource;
   final int? nextRewardLevel;
   final List<LevelReward> nextRewards;
+  final List<AchievementProgress> achievementProgress; // NUEVO
 
   GamificationDashboard({
     required this.gamificationData,
@@ -252,25 +340,23 @@ class GamificationDashboard {
     required this.xpStatsBySource,
     this.nextRewardLevel,
     required this.nextRewards,
+    this.achievementProgress = const [], // NUEVO
   });
 
-  /// Total de XP ganada
   int get totalXP => gamificationData.experiencePoints;
-
-  /// Nivel actual
   int get currentLevel => gamificationData.level;
-
-  /// Sesiones completadas
   int get totalSessions => sessionStats.totalSessions;
-
-  /// Progreso hacia el siguiente nivel (0.0 - 1.0)
   double get levelProgress => gamificationData.progressToNextLevel;
-
-  /// XP obtenida por visitas a POIs
   int get xpFromPOIs => xpStatsBySource[XPSourceType.poiVisit] ?? 0;
-
-  /// XP obtenida por completar rutas
   int get xpFromRoutes => xpStatsBySource[XPSourceType.routeComplete] ?? 0;
+  
+  // NUEVO: Estadísticas de achievements
+  int get totalAchievements => achievementProgress.length;
+  int get unlockedAchievements => achievementProgress.where((a) => a.isUnlocked).length;
+  double get achievementCompletionRate {
+    if (totalAchievements == 0) return 0.0;
+    return unlockedAchievements / totalAchievements;
+  }
 
   Map<String, dynamic> toMap() {
     return {
@@ -283,6 +369,9 @@ class GamificationDashboard {
       'nextRewardLevel': nextRewardLevel,
       'momentumState': momentumState.toMap(),
       'sessionStats': sessionStats.toMap(),
+      'totalAchievements': totalAchievements,
+      'unlockedAchievements': unlockedAchievements,
+      'achievementCompletionRate': achievementCompletionRate,
     };
   }
 }
@@ -303,10 +392,7 @@ class LevelProgress {
     required this.totalXP,
   });
 
-  /// XP restante para el siguiente nivel
   int get xpRemaining => xpNeeded - currentXP;
-
-  /// Porcentaje de progreso (0-100)
   double get progressPercentage => progress * 100;
 
   @override

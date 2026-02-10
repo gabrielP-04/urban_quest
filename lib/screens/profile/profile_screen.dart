@@ -24,7 +24,7 @@ class ProfileScreen extends StatelessWidget {
     final authService = AuthService();
     final firestoreService = FirestoreService();
     final userId = authService.currentUserId;
-    
+
     // NUEVO: Controller de gamificación
     final gamificationController = GamificationController();
 
@@ -96,7 +96,8 @@ class ProfileScreen extends StatelessWidget {
                 const SizedBox(height: 12),
 
                 // CAPA 2 - TARJETA 2: Achievements, Ranking, Routes
-                _buildActivityCard(context, profile, userId, gamificationController),
+                _buildActivityCard(
+                    context, profile, userId, gamificationController),
 
                 const SizedBox(height: 20),
 
@@ -292,7 +293,8 @@ class ProfileScreen extends StatelessWidget {
                   children: [
                     _buildQuickStat('${profile.totalPoisVisited}', 'POIs'),
                     _buildVerticalDivider(),
-                    _buildQuickStat('${profile.totalRoutesCompleted}', 'Routes'),
+                    _buildQuickStat(
+                        '${profile.totalRoutesCompleted}', 'Routes'),
                     _buildVerticalDivider(),
                     _buildQuickStat('${profile.totalAchievements}', 'Badges'),
                   ],
@@ -339,7 +341,8 @@ class ProfileScreen extends StatelessWidget {
   }
 
   // ============ CAPA 2 - TARJETA 1: PROGRESS CARD (ACTUALIZADA) ============
-  Widget _buildProgressCard(UserProfile profile, String userId, GamificationController controller) {
+  Widget _buildProgressCard(
+      UserProfile profile, String userId, GamificationController controller) {
     return FutureBuilder<GamificationData>(
       future: controller.experienceService.getUserGamificationData(userId),
       builder: (context, snapshot) {
@@ -350,17 +353,18 @@ class ProfileScreen extends StatelessWidget {
           final nextLevelXP = 250;
           final progress = currentLevelXP / nextLevelXP;
 
-          return _buildProgressCardContent(level, currentLevelXP, nextLevelXP, progress, null);
+          return _buildProgressCardContent(
+              level, currentLevelXP, nextLevelXP, progress, null);
         }
 
         final data = snapshot.data!;
-        
+
         // NUEVO: Obtener momentum si está activo
         return FutureBuilder<MomentumState>(
           future: controller.momentumService.getMomentumState(userId),
           builder: (context, momentumSnapshot) {
             final momentum = momentumSnapshot.data;
-            
+
             return Column(
               children: [
                 _buildProgressCardContent(
@@ -370,7 +374,7 @@ class ProfileScreen extends StatelessWidget {
                   data.progressToNextLevel,
                   momentum,
                 ),
-                
+
                 // NUEVO: Card de momentum activo (solo si está activo)
                 if (momentum != null && momentum.isActive) ...[
                   const SizedBox(height: 12),
@@ -559,7 +563,8 @@ class ProfileScreen extends StatelessWidget {
   }
 
   // ============ CAPA 2 - TARJETA 2: ACTIVITY (Achievements, Ranking, Routes) ============
-  Widget _buildActivityCard(BuildContext context, UserProfile profile, String userId, GamificationController controller) {
+  Widget _buildActivityCard(BuildContext context, UserProfile profile,
+      String userId, GamificationController controller) {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16),
       decoration: BoxDecoration(
@@ -584,7 +589,7 @@ class ProfileScreen extends StatelessWidget {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => AchievementsScreen(achievements: mockAchievements),
+                  builder: (context) => const AchievementsScreen(),
                 ),
               );
             },
@@ -699,7 +704,8 @@ class ProfileScreen extends StatelessWidget {
   }
 
   // NUEVO: Card de estadísticas
-  Widget _buildStatisticsCard(String userId, GamificationController controller) {
+  Widget _buildStatisticsCard(
+      String userId, GamificationController controller) {
     return FutureBuilder<GamificationDashboard>(
       future: controller.getUserDashboard(userId),
       builder: (context, snapshot) {
@@ -727,11 +733,17 @@ class ProfileScreen extends StatelessWidget {
             children: [
               _buildStatRow('✨', 'Total XP Earned', '${dashboard.totalXP}'),
               const SizedBox(height: 16),
-              _buildStatRow('🎯', 'Sessions Completed', '${dashboard.sessionStats.totalSessions}'),
+              _buildStatRow('🎯', 'Sessions Completed',
+                  '${dashboard.sessionStats.totalSessions}'),
               const SizedBox(height: 16),
-              _buildStatRow('📊', 'Avg POIs / Session', dashboard.sessionStats.averagePOIsPerSession.toStringAsFixed(1)),
+              _buildStatRow(
+                  '📊',
+                  'Avg POIs / Session',
+                  dashboard.sessionStats.averagePOIsPerSession
+                      .toStringAsFixed(1)),
               const SizedBox(height: 16),
-              _buildStatRow('🔥', 'Sessions w/ Momentum', '${dashboard.sessionStats.sessionsWithMomentum}'),
+              _buildStatRow('🔥', 'Sessions w/ Momentum',
+                  '${dashboard.sessionStats.sessionsWithMomentum}'),
             ],
           ),
         );
@@ -948,12 +960,14 @@ class ProfileScreen extends StatelessWidget {
 
   // ============ HELPER METHODS ============
 
-  Future<List<LevelReward>> _getUnlockedRewards(String userId, GamificationController controller) async {
+  Future<List<LevelReward>> _getUnlockedRewards(
+      String userId, GamificationController controller) async {
     final dashboard = await controller.getUserDashboard(userId);
     return LevelRewardsSystem.getAllRewardsUpToLevel(dashboard.currentLevel);
   }
 
-  void _showRewardsDialog(BuildContext context, String userId, GamificationController controller) {
+  void _showRewardsDialog(
+      BuildContext context, String userId, GamificationController controller) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
