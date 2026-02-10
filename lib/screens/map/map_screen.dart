@@ -327,7 +327,11 @@ class _MapScreenState extends State<MapScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
         appBar: AppBar(
-          title: const Text('Map'),
+          title: Text(
+          'Map',
+          style: Theme.of(context).textTheme.displayMedium,
+        ),
+        centerTitle: true,
         ),
         body: _isLoading
             ? const Center(child: CircularProgressIndicator())
@@ -389,9 +393,10 @@ class _MapScreenState extends State<MapScreen> {
                     bottom: 120,
                     child: Column(
                       children: [
+                       
                         FloatingActionButton(
                           heroTag: 'zoom_in',
-                          mini: true,
+                          backgroundColor: Colors.deepOrange,
                           onPressed: () {
                             _mapController.move(
                               _mapController.camera.center,
@@ -400,10 +405,10 @@ class _MapScreenState extends State<MapScreen> {
                           },
                           child: const Icon(Icons.add),
                         ),
-                        const SizedBox(height: 8),
+                        const SizedBox(height: 12),
                         FloatingActionButton(
                           heroTag: 'zoom_out',
-                          mini: true,
+                          backgroundColor: Colors.deepOrange,
                           onPressed: () {
                             _mapController.move(
                               _mapController.camera.center,
@@ -412,19 +417,25 @@ class _MapScreenState extends State<MapScreen> {
                           },
                           child: const Icon(Icons.remove),
                         ),
+
+                        const SizedBox(height: 24),
+                      
                         FloatingActionButton(
                           heroTag: 'routes',
                           backgroundColor: Colors.deepOrange,
                           onPressed: _openRouteList,
                           child: const Icon(Icons.alt_route),
                         ),
-                        if (_isCreatingRoute && _selectedPois.length >= 2)
+
+                        if (_isCreatingRoute && _selectedPois.length >= 2) ...[
+                          const SizedBox(height: 12),
                           FloatingActionButton(
                             heroTag: 'generate_route',
                             backgroundColor: Colors.green,
                             onPressed: _generateAndSaveRoute,
                             child: const Icon(Icons.check),
                           ),
+                        ],
                       ],
                     ),
                   ),
@@ -700,61 +711,140 @@ class _MapScreenState extends State<MapScreen> {
     final isVisited = _visitedPoiIds.contains(poi.id);
     final isSelected = _isPoiSelected(poi);
 
-    showDialog(
+    showModalBottomSheet(
       context: context,
-      builder: (_) => AlertDialog(
-        title: Text(poi.name),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(poi.description),
-            const SizedBox(height: 12),
-            if (isVisited)
-              const Text(
-                '✔ Already visited',
-                style: TextStyle(color: Colors.green),
-              ),
-            if (!isVisited && !isNearby)
-              const Text(
-                'Move closer to visit this place',
-                style: TextStyle(color: Colors.red),
-              ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Close'),
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) {
+        return Container(
+          margin: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(24),
           ),
-          if (isNearby && !isVisited)
-            ElevatedButton(
-              onPressed: () {
-                Navigator.pop(context);
-                _markPoiAsVisited(poi);
-              },
-              child: const Text('Mark as visited'),
-            ),
-          TextButton(
-            onPressed: () {
-              setState(() {
-                _isCreatingRoute = true;
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // IMAGE
+              ClipRRect(
+                borderRadius:
+                    const BorderRadius.vertical(top: Radius.circular(24)),
+                child: Image.asset(
+                  poi.imageUrl,
+                  height: 200,
+                  width: double.infinity,
+                  fit: BoxFit.cover,
+                ),
+              ),
 
-                if (isSelected) {
-                  _selectedPois.removeWhere((p) => p.id == poi.id);
-                } else {
-                  _selectedPois.add(poi);
-                }
-              });
+              Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // TITLE
+                    Text(
+                      poi.name,
+                      style: const TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
 
-              Navigator.pop(context);
-            },
-            child: Text(
-              isSelected ? 'Remove from route' : 'Add to route',
-            ),
+                    const SizedBox(height: 8),
+
+                    // CATEGORY CHIP
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        color:
+                            _colorForCategory(poi.category).withOpacity(0.15),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Text(
+                        poi.category.toUpperCase(),
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                          color: _colorForCategory(poi.category),
+                        ),
+                      ),
+                    ),
+
+                    const SizedBox(height: 12),
+
+                    // DESCRIPTION
+                    Text(
+                      poi.description,
+                      style: const TextStyle(
+                        fontSize: 15,
+                        color: Colors.black87,
+                      ),
+                    ),
+
+                    const SizedBox(height: 20),
+
+                    // STATUS
+                    if (isVisited)
+                      const Text(
+                        '✔ Already visited',
+                        style: TextStyle(color: Colors.green),
+                      )
+                    else if (!isNearby)
+                      const Text(
+                        'Move closer to visit this place',
+                        style: TextStyle(color: Colors.red),
+                      ),
+
+                    const SizedBox(height: 16),
+
+                    // ACTIONS
+                    Row(
+                      children: [
+                        Expanded(
+                          child: OutlinedButton(
+                            onPressed: () {
+                              setState(() {
+                                _isCreatingRoute = true;
+                                isSelected
+                                    ? _selectedPois
+                                        .removeWhere((p) => p.id == poi.id)
+                                    : _selectedPois.add(poi);
+                              });
+                              Navigator.pop(context);
+                            },
+                            child: Text(
+                              isSelected ? 'Remove from route' : 'Add to route',
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        if (isNearby && !isVisited)
+                          Expanded(
+                            child: ElevatedButton(
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.deepOrange,
+                              ),
+                              onPressed: () {
+                                Navigator.pop(context);
+                                _markPoiAsVisited(poi);
+                              },
+                              child: const Text('Mark as visited'),
+                            ),
+                          ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 
