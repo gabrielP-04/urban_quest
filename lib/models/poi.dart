@@ -5,7 +5,7 @@ class Poi {
   final double lng;
   final String category;
   final String description;
-  final String? imageUrl;
+  final String imageUrl;
   final bool isOptional;
 
   Poi({
@@ -15,7 +15,7 @@ class Poi {
     required this.lng,
     required this.category,
     required this.description,
-    this.imageUrl,
+    required this.imageUrl,
     this.isOptional = false,
   });
 
