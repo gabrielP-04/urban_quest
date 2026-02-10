@@ -1,32 +1,21 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-/// Servicio que gestiona el "momentum" de exploración del usuario
-/// En lugar de rachas diarias, premia la actividad dentro de sesiones de viaje
-/// Más apropiado para una app de turismo donde el uso es esporádico
 class MomentumService {
   final FirebaseFirestore _firestore;
 
   MomentumService({FirebaseFirestore? firestore})
       : _firestore = firestore ?? FirebaseFirestore.instance;
 
-  // ============ CONSTANTES ============
-
-  /// Horas para considerar una "sesión activa" (6 horas)
+  
   static const int SESSION_DURATION_HOURS = 6;
-
-  /// POIs necesarios para activar momentum
+  
   static const int MIN_POIS_FOR_MOMENTUM = 3;
+  
+  static const double MOMENTUM_MULTIPLIER = 1.3; 
+  
+  static const double HIGH_MOMENTUM_MULTIPLIER = 1.5;  
 
-  /// Multiplicador de XP cuando hay momentum activo
-  static const double MOMENTUM_MULTIPLIER = 1.3; // +30%
-
-  /// Multiplicador extra por sesión muy productiva (5+ POIs)
-  static const double HIGH_MOMENTUM_MULTIPLIER = 1.5; // +50%
-
-  // ============ MÉTODOS PRINCIPALES ============
-
-  /// Actualiza el momentum cuando el usuario visita un POI
-  /// Retorna información sobre el estado del momentum
+  
   Future<MomentumState> updateMomentum(String userId) async {
     try {
       final userRef = _firestore.collection('users').doc(userId);
@@ -43,10 +32,10 @@ class MomentumService {
 
       final now = DateTime.now();
 
-      // Si no hay sesión activa o la sesión expiró
+      
       if (sessionStartTimestamp == null ||
           _isSessionExpired(sessionStartTimestamp.toDate(), now)) {
-        // Iniciar nueva sesión
+        
         await userRef.update({
           'currentSessionStart': FieldValue.serverTimestamp(),
           'currentSessionPOIs': 1,
@@ -62,18 +51,18 @@ class MomentumService {
         );
       }
 
-      // Sesión activa - incrementar contador
+      
       final newSessionPOIs = sessionPOIs + 1;
       final sessionStart = sessionStartTimestamp.toDate();
       final sessionDuration = now.difference(sessionStart);
 
-      // Determinar nivel de momentum
+      
       final level = _calculateMomentumLevel(newSessionPOIs);
       final multiplier = _getMultiplier(level);
 
-      // NUEVO: Trackear activaciones de momentum
+      
       if (level != MomentumLevel.none && sessionPOIs < MIN_POIS_FOR_MOMENTUM) {
-        // Primera activación de momentum en esta sesión
+        
         final userDoc = await userRef.get();
         final currentActivations =
             userDoc.data()?['totalMomentumActivations'] as int? ?? 0;
@@ -83,7 +72,7 @@ class MomentumService {
         });
       }
 
-      // NUEVO: Trackear si alcanzó Blazing momentum
+      
       if (level == MomentumLevel.blazing) {
         await userRef.update({
           'hasReachedBlazingMomentum': true,
@@ -107,7 +96,7 @@ class MomentumService {
     }
   }
 
-  /// Verifica si el usuario tiene momentum activo
+  
   Future<bool> hasMomentum(String userId) async {
     try {
       final userDoc = await _firestore.collection('users').doc(userId).get();
@@ -130,7 +119,7 @@ class MomentumService {
     }
   }
 
-  /// Obtiene el estado actual del momentum
+  
   Future<MomentumState> getMomentumState(String userId) async {
     try {
       final userDoc = await _firestore.collection('users').doc(userId).get();
@@ -190,7 +179,7 @@ class MomentumService {
     }
   }
 
-  /// Finaliza la sesión actual y guarda estadísticas
+  
   Future<SessionSummary> endSession(String userId) async {
     try {
       final userRef = _firestore.collection('users').doc(userId);
@@ -219,7 +208,7 @@ class MomentumService {
       final sessionDuration = DateTime.now().difference(sessionStart);
       final hadMomentum = sessionPOIs >= MIN_POIS_FOR_MOMENTUM;
 
-      // Guardar sesión en historial
+      
       await _firestore
           .collection('users')
           .doc(userId)
@@ -233,7 +222,7 @@ class MomentumService {
         'hadMomentum': hadMomentum,
       });
 
-      // Limpiar sesión actual
+      
       await userRef.update({
         'currentSessionStart': null,
         'currentSessionPOIs': 0,
@@ -253,7 +242,7 @@ class MomentumService {
     }
   }
 
-  /// Obtiene estadísticas de sesiones del usuario
+  
   Future<SessionStats> getSessionStats(String userId) async {
     try {
       final sessionsSnapshot = await _firestore
@@ -296,15 +285,15 @@ class MomentumService {
     }
   }
 
-  // ============ MÉTODOS PRIVADOS ============
+  
 
-  /// Verifica si una sesión ha expirado
+  
   bool _isSessionExpired(DateTime sessionStart, DateTime now) {
     final hoursSinceStart = now.difference(sessionStart).inHours;
     return hoursSinceStart >= SESSION_DURATION_HOURS;
   }
 
-  /// Calcula el nivel de momentum basado en POIs visitados
+  
   MomentumLevel _calculateMomentumLevel(int poisVisited) {
     if (poisVisited < MIN_POIS_FOR_MOMENTUM) {
       return MomentumLevel.none;
@@ -317,23 +306,23 @@ class MomentumService {
     }
   }
 
-  /// Obtiene el multiplicador según el nivel de momentum
+  
   double _getMultiplier(MomentumLevel level) {
     switch (level) {
       case MomentumLevel.none:
         return 1.0;
       case MomentumLevel.active:
-        return 1.2; // +20%
+        return 1.2; 
       case MomentumLevel.high:
-        return 1.4; // +40%
+        return 1.4; 
       case MomentumLevel.blazing:
-        return 1.6; // +60%
+        return 1.6; 
     }
   }
 
-  // ============ MÉTODOS DE UTILIDAD ============
+  
 
-  /// Resetea el momentum del usuario (útil para testing)
+  
   Future<void> resetMomentum(String userId) async {
     await _firestore.collection('users').doc(userId).update({
       'currentSessionStart': null,
@@ -344,9 +333,9 @@ class MomentumService {
   }
 }
 
-// ============ MODELOS ============
 
-/// Nivel de momentum
+
+
 enum MomentumLevel {
   none('No Momentum', ''),
   active('Active', '🔥'),
@@ -358,21 +347,21 @@ enum MomentumLevel {
   const MomentumLevel(this.displayName, this.icon);
 }
 
-/// Estado actual del momentum
+
 class MomentumState {
-  /// Indica si el momentum está activo
+  
   final bool isActive;
 
-  /// POIs visitados en la sesión actual
+  
   final int sessionPOIsVisited;
 
-  /// Duración de la sesión actual
+  
   final Duration sessionDuration;
 
-  /// Multiplicador de XP activo
+  
   final double multiplier;
 
-  /// Nivel de momentum
+  
   final MomentumLevel level;
 
   MomentumState({
@@ -383,7 +372,7 @@ class MomentumState {
     required this.level,
   });
 
-  /// Mensaje descriptivo del estado
+  
   String get statusMessage {
     if (!isActive) {
       return 'Visit ${MomentumService.MIN_POIS_FOR_MOMENTUM} POIs to activate momentum!';
@@ -391,7 +380,7 @@ class MomentumState {
     return '${level.icon} ${level.displayName} - ${(multiplier * 100 - 100).toInt()}% XP Bonus!';
   }
 
-  /// POIs restantes para el siguiente nivel
+  
   int get poisToNextLevel {
     switch (level) {
       case MomentumLevel.none:
@@ -422,7 +411,7 @@ class MomentumState {
   }
 }
 
-/// Resumen de una sesión finalizada
+
 class SessionSummary {
   final int poisVisited;
   final Duration duration;
@@ -442,7 +431,7 @@ class SessionSummary {
   }
 }
 
-/// Estadísticas de sesiones del usuario
+
 class SessionStats {
   final int totalSessions;
   final int totalPOIsVisited;
@@ -458,7 +447,7 @@ class SessionStats {
     required this.sessionsWithMomentum,
   });
 
-  /// Porcentaje de sesiones con momentum
+  
   double get momentumRate {
     return totalSessions > 0
         ? (sessionsWithMomentum / totalSessions) * 100

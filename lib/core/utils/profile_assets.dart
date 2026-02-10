@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 class ProfileAssets {
-  // Avatares predefinidos
+  
   static const List<AvatarOption> avatars = [
     AvatarOption(id: 'avatar_1', emoji: '😊', color: Color(0xFFFFB74D)),
     AvatarOption(id: 'avatar_2', emoji: '🚀', color: Color(0xFF64B5F6)),
@@ -17,7 +17,6 @@ class ProfileAssets {
     AvatarOption(id: 'avatar_12', emoji: '🏆', color: Color(0xFFFFCA28)),
   ];
 
-  // Banners predefinidos
   static const List<BannerOption> banners = [
     BannerOption(
       id: 'banner_1',

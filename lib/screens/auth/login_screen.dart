@@ -69,10 +69,10 @@ class _LoginScreenState extends State<LoginScreen> {
         child: SingleChildScrollView(
           child: Column(
             children: [
-              // Banner superior con imagen y título superpuesto
+              
               Stack(
                 children: [
-                  // Imagen de fondo
+                  
                   Container(
                     width: double.infinity,
                     height: 280,
@@ -84,7 +84,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                   ),
 
-                  // Título y subtítulo sobre la imagen
+                  
                   Positioned(
                     bottom: 15,
                     left: 0,
@@ -108,7 +108,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 ],
               ),
 
-              // Contenido del formulario
+              
               Padding(
                 padding: const EdgeInsets.all(24.0),
                 child: Form(
@@ -116,7 +116,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      // Campo Email
+                      
                       _buildTextField(
                         controller: _emailController,
                         hintText: 'Email',
@@ -135,7 +135,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                       const SizedBox(height: 16),
 
-                      // Campo Contraseña
+                      
                       _buildTextField(
                         controller: _passwordController,
                         hintText: 'Password',
@@ -159,7 +159,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
                       const SizedBox(height: 24),
 
-                      // Botón Login
+                      
                       Container(
                         height: 56,
                         decoration: BoxDecoration(
@@ -209,11 +209,11 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                       const SizedBox(height: 16),
 
-                      // Forgot password
+                      
                       Center(
                         child: TextButton(
                           onPressed: () {
-                            // TODO: Implementar forgot password
+                            
                             ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(
                                 content: Text('Password reset coming soon!'),
@@ -231,7 +231,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                       const SizedBox(height: 8),
 
-                      // Register link
+                      
                       Center(
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.center,
@@ -305,10 +305,10 @@ class _LoginScreenState extends State<LoginScreen> {
                 keyboardType: keyboardType,
                 obscureText: obscureText,
                 onChanged: (v) {
-                  state.didChange(v); // actualiza el valor del FormField
+                  state.didChange(v); 
                 },
                 onEditingComplete: () {
-                  state.validate(); // fuerza validación al terminar
+                  state.validate(); 
                   FocusScope.of(state.context).nextFocus();
                 },
                 decoration: InputDecoration(

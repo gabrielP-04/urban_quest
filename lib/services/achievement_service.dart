@@ -2,20 +2,14 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 import '../models/achievement.dart';
 
-/// Servicio que gestiona los achievements (logros) del usuario
-/// Se integra con ExperienceService y MomentumService
 class AchievementService {
   final FirebaseFirestore firestore;
-  
+
   AchievementService({FirebaseFirestore? firestore})
       : firestore = firestore ?? FirebaseFirestore.instance;
 
-  // ============ DEFINICIÓN DE ACHIEVEMENTS ============
-  
-  /// Obtiene todos los achievements disponibles en el juego
   static List<Achievement> getAllAchievements() {
     return [
-      // === EXPLORATION ACHIEVEMENTS ===
       const Achievement(
         id: 'first_visit',
         title: 'First Steps',
@@ -66,8 +60,6 @@ class AchievementService {
         xpReward: 2000,
         rarity: AchievementRarity.legendary,
       ),
-
-      // === CULTURE ACHIEVEMENTS ===
       const Achievement(
         id: 'culture_5',
         title: 'Culture Lover',
@@ -88,8 +80,6 @@ class AchievementService {
         xpReward: 500,
         rarity: AchievementRarity.epic,
       ),
-
-      // === FOOD ACHIEVEMENTS ===
       const Achievement(
         id: 'food_5',
         title: 'Foodie',
@@ -110,8 +100,6 @@ class AchievementService {
         xpReward: 500,
         rarity: AchievementRarity.epic,
       ),
-
-      // === ROUTES ACHIEVEMENTS ===
       const Achievement(
         id: 'first_route',
         title: 'Route Starter',
@@ -142,8 +130,6 @@ class AchievementService {
         xpReward: 1500,
         rarity: AchievementRarity.epic,
       ),
-
-      // === LEVEL ACHIEVEMENTS ===
       const Achievement(
         id: 'reach_level_5',
         title: 'Rising Star',
@@ -174,8 +160,6 @@ class AchievementService {
         xpReward: 1000,
         rarity: AchievementRarity.epic,
       ),
-
-      // === MOMENTUM ACHIEVEMENTS ===
       const Achievement(
         id: 'momentum_master',
         title: 'Momentum Master',
@@ -199,29 +183,24 @@ class AchievementService {
     ];
   }
 
-  // ============ MÉTODOS PRINCIPALES ============
-
-  /// Verifica y desbloquea achievements basados en el progreso actual
-  /// Retorna lista de achievements recién desbloqueados
   Future<List<Achievement>> checkAndUnlockAchievements({
     required String userId,
     required int totalPoisVisited,
     required int totalRoutesCompleted,
     required int currentLevel,
-    Map<String, int>? categoryProgress, // POIs por categoría
+    Map<String, int>? categoryProgress,
     int? momentumActivations,
     bool? hasReachedBlazingMomentum,
     int? photosUploaded,
     int? socialShares,
   }) async {
     try {
-      // Obtener achievements actuales del usuario
       final userDoc = await firestore.collection('users').doc(userId).get();
-      
+
       if (!userDoc.exists) {
         throw Exception('Usuario no encontrado: $userId');
       }
-      
+
       final userData = userDoc.data()!;
       final currentAchievements = List<String>.from(
         userData['achievementIds'] as List? ?? [],
@@ -229,12 +208,10 @@ class AchievementService {
 
       final newlyUnlocked = <Achievement>[];
       final allAchievements = getAllAchievements();
-      
+
       for (final achievement in allAchievements) {
-        // Si ya está desbloqueado, skip
         if (currentAchievements.contains(achievement.id)) continue;
-        
-        // Calcular progreso actual
+
         final currentProgress = _calculateProgress(
           achievement,
           totalPoisVisited: totalPoisVisited,
@@ -246,18 +223,16 @@ class AchievementService {
           photosUploaded: photosUploaded,
           socialShares: socialShares,
         );
-        
-        // Si se cumple el requisito, desbloquear
+
         if (currentProgress >= achievement.requiredProgress) {
           newlyUnlocked.add(achievement);
         }
       }
-      
-      // Si hay achievements nuevos, actualizar en Firestore
+
       if (newlyUnlocked.isNotEmpty) {
         await _unlockAchievements(userId, newlyUnlocked, currentAchievements);
       }
-      
+
       return newlyUnlocked;
     } catch (e) {
       debugPrint('Error al verificar achievements: $e');
@@ -265,7 +240,6 @@ class AchievementService {
     }
   }
 
-  /// Obtiene el progreso de todos los achievements para un usuario
   Future<List<AchievementProgress>> getAchievementProgress({
     required String userId,
     required int totalPoisVisited,
@@ -279,18 +253,18 @@ class AchievementService {
   }) async {
     try {
       final userDoc = await firestore.collection('users').doc(userId).get();
-      
+
       if (!userDoc.exists) {
         return [];
       }
-      
+
       final userData = userDoc.data()!;
       final unlockedIds = List<String>.from(
         userData['achievementIds'] as List? ?? [],
       );
-      
+
       final allAchievements = getAllAchievements();
-      
+
       return allAchievements.map((achievement) {
         final isUnlocked = unlockedIds.contains(achievement.id);
         final currentProgress = _calculateProgress(
@@ -304,12 +278,12 @@ class AchievementService {
           photosUploaded: photosUploaded,
           socialShares: socialShares,
         );
-        
+
         return AchievementProgress(
           achievement: achievement,
           currentProgress: currentProgress,
           isUnlocked: isUnlocked,
-          unlockedAt: isUnlocked ? DateTime.now() : null, // TODO: obtener fecha real
+          unlockedAt: isUnlocked ? DateTime.now() : null,
         );
       }).toList();
     } catch (e) {
@@ -318,18 +292,17 @@ class AchievementService {
     }
   }
 
-  /// Obtiene solo los achievements desbloqueados
   Future<List<Achievement>> getUnlockedAchievements(String userId) async {
     try {
       final userDoc = await firestore.collection('users').doc(userId).get();
-      
+
       if (!userDoc.exists) return [];
-      
+
       final userData = userDoc.data()!;
       final unlockedIds = List<String>.from(
         userData['achievementIds'] as List? ?? [],
       );
-      
+
       return getAllAchievements()
           .where((a) => unlockedIds.contains(a.id))
           .toList();
@@ -338,9 +311,6 @@ class AchievementService {
     }
   }
 
-  // ============ MÉTODOS PRIVADOS ============
-
-  /// Calcula el progreso actual para un achievement específico
   int _calculateProgress(
     Achievement achievement, {
     required int totalPoisVisited,
@@ -354,26 +324,21 @@ class AchievementService {
   }) {
     switch (achievement.category) {
       case AchievementCategory.exploration:
-        // Progreso basado en POIs visitados
         return totalPoisVisited;
-      
+
       case AchievementCategory.culture:
-        // POIs de categoría cultura/monumento
         return categoryProgress?['culture'] ?? 0;
-      
+
       case AchievementCategory.food:
-        // POIs de categoría comida
         return categoryProgress?['food'] ?? 0;
-      
+
       case AchievementCategory.routes:
         return totalRoutesCompleted;
-      
+
       case AchievementCategory.social:
-        // Basado en nivel
         return currentLevel;
-      
+
       case AchievementCategory.special:
-        // Lógica específica por achievement
         if (achievement.id == 'momentum_master') {
           return momentumActivations ?? 0;
         }
@@ -390,7 +355,6 @@ class AchievementService {
     }
   }
 
-  /// Desbloquea achievements y actualiza Firestore
   Future<void> _unlockAchievements(
     String userId,
     List<Achievement> achievements,
@@ -401,30 +365,26 @@ class AchievementService {
         ...currentAchievements,
         ...achievements.map((a) => a.id),
       ];
-      
-      // Calcular XP total de recompensa
+
       final totalXPReward = achievements.fold<int>(
         0,
         (sum, achievement) => sum + achievement.xpReward,
       );
-      
-      // Actualizar en una transacción
+
       await firestore.runTransaction((transaction) async {
         final userRef = firestore.collection('users').doc(userId);
         final userDoc = await transaction.get(userRef);
-        
+
         if (!userDoc.exists) return;
-        
+
         final userData = userDoc.data()!;
         final currentXP = userData['experiencePoints'] as int? ?? 0;
-        
-        // Actualizar achievements y XP
+
         transaction.update(userRef, {
           'achievementIds': newIds,
           'experiencePoints': currentXP + totalXPReward,
         });
-        
-        // Registrar cada achievement desbloqueado
+
         for (final achievement in achievements) {
           transaction.set(
             userRef.collection('unlocked_achievements').doc(achievement.id),
@@ -436,7 +396,7 @@ class AchievementService {
           );
         }
       });
-      
+
       debugPrint('✨ Desbloqueados ${achievements.length} achievements!');
       debugPrint('💰 +$totalXPReward XP por achievements');
     } catch (e) {

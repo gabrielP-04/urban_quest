@@ -1,28 +1,19 @@
-/// Resultado de una operación que otorga experiencia al usuario
-/// Contiene información sobre el XP ganado y si hubo cambio de nivel
 class LevelUpResult {
-  /// Cantidad de XP ganada en esta operación
+  
   final int xpGained;
   
-  /// XP total del usuario después de la operación
   final int newTotalXP;
   
-  /// Nivel del usuario antes de ganar XP
   final int oldLevel;
   
-  /// Nivel del usuario después de ganar XP
   final int newLevel;
   
-  /// Indica si el usuario subió de nivel
   final bool didLevelUp;
+
+  final String? reason;  
   
-  /// Razón por la cual se otorgó el XP (ej: "Visited Duomo di Milano")
-  final String? reason;
-  
-  /// Tipo de actividad que generó el XP
   final XPSourceType sourceType;
   
-  /// Bonificaciones aplicadas (multiplicadores, bonus, etc)
   final List<XPBonus> bonusesApplied;
 
   LevelUpResult({
@@ -36,13 +27,13 @@ class LevelUpResult {
     this.bonusesApplied = const [],
   });
 
-  /// Número de niveles ganados (normalmente 0 o 1, pero podría ser más)
+  
   int get levelsGained => newLevel - oldLevel;
 
-  /// Indica si se aplicaron bonificaciones
+  
   bool get hadBonuses => bonusesApplied.isNotEmpty;
 
-  /// XP base antes de aplicar bonificaciones
+  
   int get baseXP {
     if (bonusesApplied.isEmpty) return xpGained;
     
@@ -57,7 +48,7 @@ class LevelUpResult {
     return base;
   }
 
-  /// Crea un resultado sin cambio de nivel
+  
   factory LevelUpResult.noLevelUp({
     required int xpGained,
     required int newTotalXP,
@@ -78,7 +69,7 @@ class LevelUpResult {
     );
   }
 
-  /// Crea un resultado con subida de nivel
+  
   factory LevelUpResult.withLevelUp({
     required int xpGained,
     required int newTotalXP,
@@ -100,7 +91,7 @@ class LevelUpResult {
     );
   }
 
-  /// Convierte a mapa para logging o almacenamiento
+  
   Map<String, dynamic> toMap() {
     return {
       'xpGained': xpGained,
@@ -156,48 +147,48 @@ class LevelUpResult {
   int get hashCode => Object.hash(xpGained, newTotalXP, oldLevel, newLevel);
 }
 
-/// Tipos de fuentes de experiencia
+
 enum XPSourceType {
-  /// Visitar un punto de interés
+  
   poiVisit('POI Visit'),
   
-  /// Completar una ruta
+  
   routeComplete('Route Complete'),
   
-  /// Login diario
+  
   dailyLogin('Daily Login'),
   
-  /// Subir una foto
+  
   photoUpload('Photo Upload'),
   
-  /// Compartir en redes sociales
+  
   socialShare('Social Share'),
   
-  /// Bonus de racha
+  
   streak('Streak Bonus'),
   
-  /// Recompensa por evento especial
+  
   specialEvent('Special Event'),
   
-  /// Otro tipo de actividad
+  
   other('Other');
 
   final String displayName;
   const XPSourceType(this.displayName);
 }
 
-/// Representa un bonus o multiplicador aplicado al XP
+
 class XPBonus {
-  /// Nombre del bonus
+  
   final String name;
   
-  /// Valor del bonus (multiplicador o cantidad fija)
+  
   final double value;
   
-  /// Indica si es un multiplicador (true) o cantidad fija (false)
+  
   final bool isMultiplier;
   
-  /// Descripción del bonus
+  
   final String description;
 
   XPBonus({
@@ -207,7 +198,7 @@ class XPBonus {
     required this.description,
   });
 
-  /// Bonus por primera vez (+50%)
+  
   factory XPBonus.firstTime() {
     return XPBonus(
       name: 'First Time',
@@ -217,7 +208,7 @@ class XPBonus {
     );
   }
 
-  /// Bonus por racha de días consecutivos (+20%)
+  
   factory XPBonus.streak() {
     return XPBonus(
       name: 'Streak',
@@ -227,7 +218,7 @@ class XPBonus {
     );
   }
 
-  /// Bonus por evento especial
+  
   factory XPBonus.specialEvent(double multiplier, String eventName) {
     return XPBonus(
       name: 'Special Event',
@@ -237,7 +228,7 @@ class XPBonus {
     );
   }
 
-  /// Bonus de cantidad fija
+  
   factory XPBonus.fixed(int amount, String reason) {
     return XPBonus(
       name: 'Fixed Bonus',
@@ -247,7 +238,7 @@ class XPBonus {
     );
   }
 
-  /// Aplica el bonus a una cantidad de XP base
+  
   int apply(int baseXP) {
     if (isMultiplier) {
       return (baseXP * value).round();

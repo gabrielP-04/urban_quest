@@ -42,7 +42,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     super.initState();
     _firstNameController.text = widget.profile.firstName;
     _lastNameController.text = widget.profile.lastName;
-    _selectedTitle = widget.profile.profileTitle;  // ✅ Inicializar con el título del perfil
+    _selectedTitle = widget.profile.profileTitle;  
     _selectedAvatarId = widget.profile.avatarId;
     _selectedBannerId = widget.profile.bannerId;
   }
@@ -66,7 +66,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         displayName: '${_firstNameController.text.trim()} ${_lastNameController.text.trim()}',
         avatarId: _selectedAvatarId,
         bannerId: _selectedBannerId,
-        profileTitle: _selectedTitle,  // ✅ Guardar el título seleccionado
+        profileTitle: _selectedTitle,  
       );
 
       await _firestoreService.updateUserProfile(updatedProfile);
@@ -159,12 +159,12 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Banner + Avatar Section
+              
               _buildBannerAvatarSection(currentAvatar, currentBanner),
 
-              const SizedBox(height: 80), // Espacio para el avatar que sobresale
+              const SizedBox(height: 80), 
 
-              // Personal Info
+              
               const Padding(
                 padding: EdgeInsets.symmetric(horizontal: 20, vertical: 8),
                 child: Text(
@@ -182,7 +182,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
               const SizedBox(height: 60),
 
-              // Title Section
+              
               const Padding(
                 padding: EdgeInsets.symmetric(horizontal: 20, vertical: 8),
                 child: Text(
@@ -210,7 +210,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     return Stack(
       clipBehavior: Clip.none,
       children: [
-        // Banner
+        
         InkWell(
           onTap: _selectBanner,
           child: Container(
@@ -229,7 +229,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
             ),
             child: Stack(
               children: [
-                // Edit button banner
+                
                 Positioned(
                   right: 12,
                   top: 12,
@@ -251,7 +251,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           ),
         ),
 
-        // Avatar
+        
         Positioned(
           bottom: -50,
           left: 0,
@@ -285,7 +285,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                         style: const TextStyle(fontSize: 56),
                       ),
                     ),
-                    // Edit button avatar
+                    
                     Positioned(
                       right: 4,
                       bottom: 4,
@@ -434,7 +434,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   }
 }
 
-// Avatar Picker Dialog
+
 class _AvatarPickerDialog extends StatelessWidget {
   final String currentId;
 
@@ -489,7 +489,7 @@ class _AvatarPickerDialog extends StatelessWidget {
   }
 }
 
-// Banner Picker Dialog
+
 class _BannerPickerDialog extends StatelessWidget {
   final String currentId;
 

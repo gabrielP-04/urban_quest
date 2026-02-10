@@ -1,7 +1,3 @@
-/// Modelos para el sistema de Achievements
-/// Integrado con gamification_models.dart
-
-/// Modelo de Achievement (Logro)
 class Achievement {
   final String id;
   final String title;
@@ -56,14 +52,13 @@ class Achievement {
   }
 }
 
-/// Categoría del logro
 enum AchievementCategory {
-  exploration,  // Relacionado con explorar la ciudad
-  culture,      // Relacionado con cultura y monumentos
-  food,         // Relacionado con gastronomía
-  routes,       // Relacionado con completar rutas
-  social,       // Relacionado con nivel y ranking
-  special,      // Logros especiales (momentum, fotos, etc.)
+  exploration,  
+  culture,      
+  food,         
+  routes,       
+  social,       
+  special,      
 }
 
 extension AchievementCategoryExtension on AchievementCategory {
@@ -102,12 +97,11 @@ extension AchievementCategoryExtension on AchievementCategory {
   }
 }
 
-/// Rareza del logro (determina el color y la importancia)
 enum AchievementRarity {
-  common,    // Bronce - Fáciles de conseguir
-  rare,      // Plata - Requieren esfuerzo moderado
-  epic,      // Oro - Difíciles de conseguir
-  legendary, // Platino - Muy raros y especiales
+  common,    
+  rare,      
+  epic,      
+  legendary, 
 }
 
 extension AchievementRarityExtension on AchievementRarity {
@@ -138,7 +132,6 @@ extension AchievementRarityExtension on AchievementRarity {
   }
 }
 
-/// Estado del progreso de un achievement para un usuario
 class AchievementProgress {
   final Achievement achievement;
   final int currentProgress;
@@ -152,19 +145,16 @@ class AchievementProgress {
     this.unlockedAt,
   });
 
-  /// Progreso como porcentaje (0.0 - 1.0)
   double get progressPercentage {
     if (isUnlocked) return 1.0;
     return (currentProgress / achievement.requiredProgress).clamp(0.0, 1.0);
   }
 
-  /// Progreso restante
   int get remainingProgress {
     if (isUnlocked) return 0;
     return (achievement.requiredProgress - currentProgress).clamp(0, achievement.requiredProgress);
   }
 
-  /// Mensaje de progreso
   String get progressMessage {
     if (isUnlocked) {
       return 'Unlocked!';
@@ -190,7 +180,6 @@ class AchievementProgress {
   }
 }
 
-/// Resultado de verificar achievements después de una acción
 class AchievementCheckResult {
   final List<Achievement> newlyUnlocked;
   final int totalXPRewarded;

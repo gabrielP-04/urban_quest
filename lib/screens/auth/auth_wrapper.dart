@@ -47,11 +47,9 @@ class _AuthWrapperState extends State<AuthWrapper> {
           );
         }
 
-        // Si hay usuario → Sincronizar email si cambió
         if (snapshot.hasData && snapshot.data != null) {
           final user = snapshot.data!;
-          
-          // Sincronizar email con Firestore si cambió y está verificado
+                    
           if (user.email != null && 
               user.emailVerified && 
               user.email != _lastSyncedEmail) {
@@ -61,33 +59,33 @@ class _AuthWrapperState extends State<AuthWrapper> {
           return const MainScaffold();
         }
 
-        // Si no hay usuario → Login
+        
         return const LoginScreen();
       },
     );
   }
 
-  /// Sincroniza el email de Firebase Auth con Firestore
+  
   Future<void> _syncEmailWithFirestore(User user) async {
     try {
-      // Obtener el perfil actual de Firestore
+      
       final profile = await _firestoreService.getUserProfile(user.uid);
 
-      // Si el email en Firestore es diferente al de Auth, actualizar
+      
       if (profile != null && profile.email != user.email) {
         await _firestoreService.updateUserEmail(
           userId: user.uid,
           email: user.email!,
         );
         
-        // Actualizar el último email sincronizado
+        
         setState(() {
           _lastSyncedEmail = user.email;
         });
         
         debugPrint('✅ Email sincronizado en Firestore: ${user.email}');
       } else {
-        // Actualizar el último email sincronizado aunque no haya cambiado
+        
         setState(() {
           _lastSyncedEmail = user.email;
         });

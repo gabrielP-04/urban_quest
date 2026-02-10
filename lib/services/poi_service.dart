@@ -7,18 +7,12 @@ import '../models/poi.dart';
 class PoiService {
   static final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   
-  // ============ MÉTODO ORIGINAL ============
-  
-  /// Carga los POIs desde el archivo JSON local (TU MÉTODO ORIGINAL)
   static Future<List<Poi>> loadPois() async {
     final jsonString = await rootBundle.loadString('assets/data/pois.json');
     final List<dynamic> jsonList = json.decode(jsonString);
     return jsonList.map((e) => Poi.fromJson(e)).toList();
   }
-  
-  // ============ MÉTODOS NUEVOS PARA GAMIFICACIÓN ============
-
-  /// Gets visited POIs from Firestore - reads from "visitedPoiIds"
+ 
  static Future<Set<String>> getVisitedPoisFromFirestore() async {
     final userId = FirebaseAuth.instance.currentUser?.uid;
     if (userId == null) return {};
@@ -28,7 +22,7 @@ class PoiService {
       if (!doc.exists) return {};
 
       final data = doc.data();
-      // Read from BOTH fields for backwards compatibility
+      
       final visitedPoiIds = data?['visitedPoiIds'] as List<dynamic>? ?? [];
       final visitedPOIsOld = data?['visitedPOIs'] as List<dynamic>? ?? [];
 
@@ -76,7 +70,7 @@ class PoiService {
     return combined;
   }
 
-  /// Obtiene el total de POIs visitados del usuario
+  
   static Future<int> getTotalVisitedCount() async {
     final userId = FirebaseAuth.instance.currentUser?.uid;
     if (userId == null) return 0;
@@ -93,13 +87,13 @@ class PoiService {
     }
   }
 
-  /// Verifica si un POI específico ha sido visitado
+  
   static Future<bool> isPoiVisited(String poiId) async {
     final visitedPois = await getVisitedPoisFromFirestore();
     return visitedPois.contains(poiId);
   }
 
-  /// Obtiene estadísticas de visitas por categoría
+  
   static Future<Map<String, int>> getVisitStatsByCategory(List<Poi> allPois) async {
     final visitedIds = await getVisitedPoisFromFirestore();
     final stats = <String, int>{};

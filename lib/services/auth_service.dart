@@ -4,18 +4,18 @@ import 'package:urban_quest/services/visited_poi_storage.dart';
 class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
 
-  // Stream de cambios de autenticación
+  
   Stream<User?> get authStateChanges => _auth.authStateChanges();
 
-  // Usuario actual
+  
   User? get currentUser => _auth.currentUser;
   String? get currentUserId => _auth.currentUser?.uid;
   String? get currentUserEmail => _auth.currentUser?.email;
 
-  // Verificar si hay sesión activa
+  
   bool get isSignedIn => _auth.currentUser != null;
 
-  /// Registro de nuevo usuario
+  
   Future<UserCredential> signUp({
     required String email,
     required String password,
@@ -33,7 +33,7 @@ class AuthService {
     }
   }
 
-  /// Iniciar sesión
+  
   Future<UserCredential> signIn({
     required String email,
     required String password,
@@ -51,7 +51,7 @@ class AuthService {
     }
   }
 
-  /// Cerrar sesión
+  
   Future<void> signOut() async {
     try {
       await VisitedPoiStorage.clearVisitedPoiIds(userId: currentUserId);
@@ -61,7 +61,7 @@ class AuthService {
     }
   }
 
-  /// Restablecer contraseña
+  
   Future<void> resetPassword(String email) async {
     try {
       await _auth.sendPasswordResetEmail(email: email.trim());
@@ -72,7 +72,7 @@ class AuthService {
     }
   }
 
-  /// Eliminar cuenta
+  
   Future<void> deleteAccount() async {
     try {
       await _auth.currentUser?.delete();
@@ -83,7 +83,7 @@ class AuthService {
     }
   }
 
-  /// Cambiar email (requiere verificación)
+  
   Future<void> changeEmail({
     required String newEmail,
     required String password,
@@ -95,7 +95,7 @@ class AuthService {
     }
 
     try {
-      // Re-autenticar al usuario primero
+      
       final credential = EmailAuthProvider.credential(
         email: user.email!,
         password: password,
@@ -103,8 +103,8 @@ class AuthService {
 
       await user.reauthenticateWithCredential(credential);
 
-      // Enviar email de verificación al nuevo correo
-      // El usuario debe verificar el nuevo email antes de que se actualice
+      
+      
       await user.verifyBeforeUpdateEmail(newEmail);
 
     } on FirebaseAuthException catch (e) {
@@ -114,7 +114,7 @@ class AuthService {
     }
   }
 
-  /// Cambiar contraseña
+  
   Future<void> changePassword({
     required String currentPassword,
     required String newPassword,
@@ -126,7 +126,7 @@ class AuthService {
     }
 
     try {
-      // Re-autenticar al usuario primero
+      
       final credential = EmailAuthProvider.credential(
         email: user.email!,
         password: currentPassword,
@@ -134,7 +134,7 @@ class AuthService {
 
       await user.reauthenticateWithCredential(credential);
 
-      // Cambiar la contraseña
+      
       await user.updatePassword(newPassword);
 
     } on FirebaseAuthException catch (e) {
@@ -144,7 +144,7 @@ class AuthService {
     }
   }
 
-  /// Manejo de errores de Firebase Auth en español
+  
   String _handleAuthException(FirebaseAuthException e) {
     switch (e.code) {
       case 'user-not-found':

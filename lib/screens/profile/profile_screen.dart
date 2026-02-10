@@ -34,14 +34,14 @@ class ProfileScreen extends StatelessWidget {
       body: StreamBuilder<UserProfile?>(
         stream: firestoreService.userProfileStream(userId!),
         builder: (context, snapshot) {
-          // Loading state
+          
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(
               child: CircularProgressIndicator(color: Colors.deepOrange),
             );
           }
 
-          // Error state
+          
           if (snapshot.hasError) {
             return Center(
               child: Column(
@@ -55,7 +55,7 @@ class ProfileScreen extends StatelessWidget {
             );
           }
 
-          // No profile found
+          
           if (!snapshot.hasData || snapshot.data == null) {
             return const Center(
               child: Text('Profile not found'),
@@ -67,17 +67,17 @@ class ProfileScreen extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // CAPA 1: User Info Card
+                
                 _buildUserInfoCard(context, profile),
 
                 const SizedBox(height: 10),
 
-                // CAPA 2 - TARJETA 1: Progress Card (ACTUALIZADA con gamificación real)
+                
                 _buildProgressCard(profile, userId, gamificationController),
 
                 const SizedBox(height: 20),
 
-                // Subtítulo antes de Stats
+                
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 20),
                   child: Text(
@@ -88,13 +88,13 @@ class ProfileScreen extends StatelessWidget {
 
                 const SizedBox(height: 12),
 
-                // CAPA 2 - TARJETA 2: Achievements, Ranking, Routes
+                
                 _buildActivityCard(
                     context, profile, userId, gamificationController),
 
                 const SizedBox(height: 20),
 
-                //Estadísticas de gamificación
+                
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 20),
                   child: Text(
@@ -109,7 +109,7 @@ class ProfileScreen extends StatelessWidget {
 
                 const SizedBox(height: 20),
 
-                // Subtítulo Settings
+                
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 20),
                   child: Text(
@@ -120,15 +120,15 @@ class ProfileScreen extends StatelessWidget {
 
                 const SizedBox(height: 12),
 
-                // CAPA 2 - TARJETA 3: Settings Options
+                
                 _buildSettingsCard(context),
 
                 const SizedBox(height: 24),
 
-                // Logout Button
+                
                 _buildLogoutButton(context, authService),
 
-                const SizedBox(height: 100), // Space for bottom nav
+                const SizedBox(height: 100), 
               ],
             ),
           );
@@ -137,9 +137,9 @@ class ProfileScreen extends StatelessWidget {
     );
   }
 
-  // ============ CAPA 1: USER INFO CARD CON BANNER Y AVATAR PERSONALIZADO ============
+  
   Widget _buildUserInfoCard(BuildContext context, UserProfile profile) {
-    // Obtener el avatar y banner personalizados del usuario
+    
     final avatar = ProfileAssets.getAvatar(profile.avatarId);
     final banner = ProfileAssets.getBanner(profile.bannerId);
 
@@ -158,11 +158,11 @@ class ProfileScreen extends StatelessWidget {
       ),
       child: Column(
         children: [
-          // Stack con banner y avatar
+          
           Stack(
             clipBehavior: Clip.none,
             children: [
-              // Banner con gradiente personalizado
+              
               Container(
                 height: 120,
                 decoration: BoxDecoration(
@@ -174,7 +174,7 @@ class ProfileScreen extends StatelessWidget {
                 ),
               ),
 
-              // Avatar circular personalizado sobre el banner
+              
               Positioned(
                 bottom: -40,
                 left: 0,
@@ -208,7 +208,7 @@ class ProfileScreen extends StatelessWidget {
                 ),
               ),
 
-              // Botón de editar
+              
               Positioned(
                 right: 12,
                 top: 12,
@@ -250,14 +250,14 @@ class ProfileScreen extends StatelessWidget {
             ],
           ),
 
-          // Información del usuario (debajo del avatar, sobre fondo blanco)
-          const SizedBox(height: 50), // Espacio para el avatar que sobresale
+          
+          const SizedBox(height: 50), 
 
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20),
             child: Column(
               children: [
-                // Nombre completo
+                
                 Text(
                   profile.fullName,
                   style: const TextStyle(
@@ -269,7 +269,7 @@ class ProfileScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 4),
 
-                // Username
+                
                 Text(
                   '@${profile.username}',
                   style: const TextStyle(
@@ -280,7 +280,7 @@ class ProfileScreen extends StatelessWidget {
 
                 const SizedBox(height: 16),
 
-                // Stats rápidas
+                
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
@@ -333,13 +333,13 @@ class ProfileScreen extends StatelessWidget {
     );
   }
 
-  // ============ CAPA 2 - TARJETA 1: PROGRESS CARD (ACTUALIZADA) ============
+  
   Widget _buildProgressCard(
       UserProfile profile, String userId, GamificationController controller) {
     return FutureBuilder<GamificationData>(
       future: controller.experienceService.getUserGamificationData(userId),
       builder: (context, snapshot) {
-        // Si está cargando o hay error, mostrar versión simplificada
+        
         if (!snapshot.hasData) {
           final level = (profile.experiencePoints / 250).floor() + 1;
           final currentLevelXP = profile.experiencePoints % 250;
@@ -352,7 +352,7 @@ class ProfileScreen extends StatelessWidget {
 
         final data = snapshot.data!;
 
-        // NUEVO: Obtener momentum si está activo
+        
         return FutureBuilder<MomentumState>(
           future: controller.momentumService.getMomentumState(userId),
           builder: (context, momentumSnapshot) {
@@ -368,7 +368,7 @@ class ProfileScreen extends StatelessWidget {
                   momentum,
                 ),
 
-                // NUEVO: Card de momentum activo (solo si está activo)
+                
                 if (momentum != null && momentum.isActive) ...[
                   const SizedBox(height: 12),
                   _buildMomentumCard(momentum),
@@ -405,7 +405,7 @@ class ProfileScreen extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Level Title con icono
+          
           Row(
             children: [
               const Text('👑', style: TextStyle(fontSize: 24)),
@@ -431,7 +431,7 @@ class ProfileScreen extends StatelessWidget {
 
           const SizedBox(height: 16),
 
-          // Progress Bar con gradiente
+          
           ClipRRect(
             borderRadius: BorderRadius.circular(10),
             child: Stack(
@@ -461,7 +461,7 @@ class ProfileScreen extends StatelessWidget {
 
           const SizedBox(height: 12),
 
-          // XP Details
+          
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -487,7 +487,7 @@ class ProfileScreen extends StatelessWidget {
     );
   }
 
-  // NUEVO: Card de momentum activo
+  
   Widget _buildMomentumCard(MomentumState momentum) {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16),
@@ -555,7 +555,7 @@ class ProfileScreen extends StatelessWidget {
     return 'Legend';
   }
 
-  // ============ CAPA 2 - TARJETA 2: ACTIVITY (Achievements, Ranking, Routes) ============
+  
   Widget _buildActivityCard(BuildContext context, UserProfile profile,
       String userId, GamificationController controller) {
     return Container(
@@ -589,7 +589,7 @@ class ProfileScreen extends StatelessWidget {
             isFirst: true,
           ),
           _buildDivider(),
-          // NUEVO: Item de recompensas
+          
           FutureBuilder<List<LevelReward>>(
             future: _getUnlockedRewards(userId, controller),
             builder: (context, snapshot) {
@@ -671,7 +671,7 @@ class ProfileScreen extends StatelessWidget {
     );
   }
 
-  // NUEVO: Card de estadísticas
+  
   Widget _buildStatisticsCard(
       String userId, GamificationController controller) {
     return FutureBuilder<GamificationDashboard>(
@@ -742,7 +742,7 @@ class ProfileScreen extends StatelessWidget {
     );
   }
 
-  // ============ CAPA 2 - TARJETA 3: SETTINGS OPTIONS ============
+  
   Widget _buildSettingsCard(BuildContext context) {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16),
@@ -826,7 +826,7 @@ class ProfileScreen extends StatelessWidget {
     );
   }
 
-  // Divider helper
+  
   Widget _buildDivider() {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -838,7 +838,7 @@ class ProfileScreen extends StatelessWidget {
     );
   }
 
-  // ============ LOGOUT BUTTON ============
+  
   Widget _buildLogoutButton(BuildContext context, AuthService authService) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -911,7 +911,7 @@ class ProfileScreen extends StatelessWidget {
     );
   }
 
-  // ============ HELPER METHODS ============
+  
 
   Future<List<LevelReward>> _getUnlockedRewards(
       String userId, GamificationController controller) async {

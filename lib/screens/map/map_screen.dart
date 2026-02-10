@@ -852,7 +852,9 @@ class _MapScreenState extends State<MapScreen> {
                                 _markPoiAsVisited(poi);
                               },
                               child: const Text('Mark as visited',
-                              style: TextStyle(color: Color.fromARGB(255, 255, 255, 255))),
+                                  style: TextStyle(
+                                      color:
+                                          Color.fromARGB(255, 255, 255, 255))),
                             ),
                           ),
                       ],
@@ -1092,7 +1094,6 @@ class _MapScreenState extends State<MapScreen> {
       message.write(' ${result.momentumState.level.icon}');
     }
 
-    // Tu SnackBar original con el color actualizado
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(message.toString()),
@@ -1148,7 +1149,6 @@ class _MapScreenState extends State<MapScreen> {
   }
 
   Widget _buildMomentumBanner(MomentumState momentum) {
-    // Si no está activo, no mostrar nada
     if (!momentum.isActive) return const SizedBox.shrink();
 
     return Positioned(
@@ -1172,13 +1172,12 @@ class _MapScreenState extends State<MapScreen> {
         ),
         child: Row(
           children: [
-            // Icono de fuego
             Text(
               momentum.level.icon,
               style: const TextStyle(fontSize: 28),
             ),
             const SizedBox(width: 12),
-            // Información
+
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -1203,7 +1202,7 @@ class _MapScreenState extends State<MapScreen> {
                 ],
               ),
             ),
-            // Bonus
+           
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               decoration: BoxDecoration(
@@ -1225,7 +1224,6 @@ class _MapScreenState extends State<MapScreen> {
     );
   }
 
-  // Tu SnackBar original para fallback
   void _showOriginalSnackbar(String poiName) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(

@@ -50,23 +50,23 @@ class _RegisterScreenState extends State<RegisterScreen> {
     setState(() => _isLoading = true);
 
     try {
-      // Crear usuario en Firebase Auth
+      
       final credential = await _authService.signUp(
         email: _emailController.text.trim(),
         password: _passwordController.text,
       );
 
-      // Extraer nombre y apellido del nombre completo
+      
       final fullName = _nameController.text.trim();
       final nameParts = fullName.split(' ');
       final firstName = nameParts.isNotEmpty ? nameParts[0] : fullName;
       final lastName =
           nameParts.length > 1 ? nameParts.sublist(1).join(' ') : '';
 
-      // Generar username simple del email
+      
       final username = _emailController.text.trim().split('@')[0].toLowerCase();
 
-      // Crear perfil en Firestore
+      
       if (credential.user != null) {
         await _firestoreService.createUserProfile(
           userId: credential.user!.uid,
@@ -110,10 +110,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
         child: SingleChildScrollView(
           child: Column(
             children: [
-              // Banner superior con título superpuesto
+              
               Stack(
                 children: [
-                  // Imagen de fondo
+                  
                   Container(
                     width: double.infinity,
                     height: 280,
@@ -125,7 +125,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     ),
                   ),
 
-                  // Título y subtítulo sobre la imagen
+                  
                   Positioned(
                     bottom: 15,
                     left: 0,
@@ -149,7 +149,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 ],
               ),
 
-              // Contenido del formulario
+              
               Padding(
                 padding: const EdgeInsets.all(24.0),
                 child: Form(
@@ -157,7 +157,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      // Campo Nombre
+                      
                       _buildTextField(
                         controller: _nameController,
                         hintText: 'Full Name',
@@ -172,7 +172,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       ),
                       const SizedBox(height: 16),
 
-                      // Campo Email
+                      
                       _buildTextField(
                         controller: _emailController,
                         hintText: 'Email',
@@ -191,7 +191,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       ),
                       const SizedBox(height: 16),
 
-                      // Campo Contraseña
+                      
                       _buildTextField(
                         controller: _passwordController,
                         hintText: 'Password',
@@ -214,7 +214,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       ),
                       const SizedBox(height: 16),
 
-                      // Campo Confirmar Contraseña
+                      
                       _buildTextField(
                         controller: _confirmPasswordController,
                         hintText: 'Confirm Password',
@@ -238,7 +238,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       ),
                       const SizedBox(height: 32),
 
-                      // Botón Crear Cuenta
+                      
                       Container(
                         height: 56,
                         decoration: BoxDecoration(
@@ -287,7 +287,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       ),
                       const SizedBox(height: 16),
 
-                      // Términos y condiciones
+                      
                       RichText(
                         textAlign: TextAlign.center,
                         text: TextSpan(
@@ -314,7 +314,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       ),
                       const SizedBox(height: 24),
 
-                      // Link a login
+                      
                       Center(
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.center,
@@ -387,10 +387,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 obscureText: obscureText,
                 textInputAction: textInputAction,
                 onChanged: (v) {
-                  state.didChange(v); // actualiza el valor del FormField
+                  state.didChange(v); 
                 },
                 onEditingComplete: () {
-                  state.validate(); // fuerza validación al terminar
+                  state.validate(); 
                   FocusScope.of(state.context).nextFocus();
                 },
                 decoration: InputDecoration(

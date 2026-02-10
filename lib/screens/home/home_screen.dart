@@ -48,7 +48,7 @@ class HomeScreen extends StatelessWidget {
                 padding: const EdgeInsets.all(16.0),
                 child: Column(
                   children: [
-                    // ⬇️ ESPERAMOS a GamificationData
+                    
                     FutureBuilder<GamificationData>(
                       future: gamificationController.experienceService
                           .getUserGamificationData(currentUserId),
@@ -64,7 +64,7 @@ class HomeScreen extends StatelessWidget {
                         }
 
                         if (!snapshot.hasData) {
-                          return const SizedBox(); // o Text de error si quieres
+                          return const SizedBox(); 
                         }
 
                         return _ProfileHeader(
@@ -90,7 +90,7 @@ class HomeScreen extends StatelessWidget {
   }
 }
 
-// ==================== PROFILE HEADER ====================
+
 class _ProfileHeader extends StatelessWidget {
   final UserProfile profile;
   final GamificationData data;
@@ -123,7 +123,7 @@ class _ProfileHeader extends StatelessWidget {
       ),
       child: Row(
         children: [
-          // Avatar con nivel REAL
+          
           Stack(
             children: [
               Container(
@@ -149,7 +149,7 @@ class _ProfileHeader extends StatelessWidget {
                 ),
               ),
 
-              // Badge de nivel
+              
               Positioned(
                 bottom: 0,
                 right: 0,
@@ -176,7 +176,7 @@ class _ProfileHeader extends StatelessWidget {
 
           const SizedBox(width: 16),
 
-          // Info del usuario
+          
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -206,7 +206,7 @@ class _ProfileHeader extends StatelessWidget {
 
                 const SizedBox(height: 8),
 
-                // Barra de progreso REAL
+                
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -263,7 +263,7 @@ class _ProfileHeader extends StatelessWidget {
   }
 }
 
-// ==================== MAP CARD ====================
+
 class _MapCard extends StatelessWidget {
   final UserProfile profile;
 
@@ -292,7 +292,7 @@ class _MapCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(24),
           child: Stack(
             children: [
-              // Fondo del mapa
+              
               Positioned.fill(
                 child: Container(
                   decoration: BoxDecoration(
@@ -307,7 +307,7 @@ class _MapCard extends StatelessWidget {
                   ),
                 ),
               ),
-              // Icono de mapa decorativo
+              
               Positioned.fill(
                 child: Opacity(
                   opacity: 0.15,
@@ -318,7 +318,7 @@ class _MapCard extends StatelessWidget {
                   ),
                 ),
               ),
-              // Indicador de ubicación central
+              
               Center(
                 child: Container(
                   width: 60,
@@ -341,7 +341,7 @@ class _MapCard extends StatelessWidget {
                   ),
                 ),
               ),
-              // Marcadores decorativos (POIs simulados)
+              
               Positioned(
                 top: 50,
                 left: 80,
@@ -407,7 +407,7 @@ class _StatsCard extends StatelessWidget {
     return FutureBuilder<List<Poi>>(
       future: PoiService.loadPois(),
       builder: (context, snapshot) {
-        // Use actual total POIs from JSON, fallback to 50 if not loaded yet
+        
         final totalPois = snapshot.hasData ? snapshot.data!.length : 50;
         final discoveredPercent =
             ((profile.totalPoisVisited / totalPois) * 100).clamp(0, 100).round();

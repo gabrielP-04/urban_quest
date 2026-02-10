@@ -62,7 +62,6 @@ class _MainScaffoldState extends State<MainScaffold> {
   }
 }
 
-// Wrappers sin Scaffold (solo contenido)
 class HomeScreenContent extends StatelessWidget {
   const HomeScreenContent({Key? key}) : super(key: key);
 

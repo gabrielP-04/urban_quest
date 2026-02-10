@@ -25,7 +25,7 @@ class _RouteListSheetState extends State<RouteListSheet> {
   @override
   void initState() {
     super.initState();
-    // Copia local para permitir updates en caliente
+    
     _routes = List.from(widget.routes);
   }
 

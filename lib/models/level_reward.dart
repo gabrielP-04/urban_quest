@@ -1,24 +1,18 @@
-/// Representa una recompensa desbloqueada al alcanzar un nivel específico
+
 class LevelReward {
-  /// Nivel en el que se desbloquea esta recompensa
+  
   final int level;
   
-  /// Tipo de recompensa
   final RewardType type;
   
-  /// ID del item desbloqueado (ej: achievement_id, badge_id)
   final String itemId;
-  
-  /// Nombre descriptivo de la recompensa
+ 
   final String name;
   
-  /// Descripción de la recompensa
   final String description;
   
-  /// Emoji o icono que representa la recompensa
   final String? icon;
   
-  /// URL de imagen (si aplica)
   final String? imageUrl;
 
   LevelReward({
@@ -64,39 +58,30 @@ class LevelReward {
   }
 }
 
-/// Tipos de recompensas disponibles
+
 enum RewardType {
-  /// Logro desbloqueado
+ 
   achievement('Achievement'),
   
-  /// Insignia nueva
   badge('Badge'),
   
-  /// Icono de perfil personalizado
   profileIcon('Profile Icon'),
   
-  /// Marco de perfil decorativo
   profileFrame('Profile Frame'),
   
-  /// Título especial
   title('Title'),
   
-  /// Funcionalidad desbloqueada
   feature('Feature'),
   
-  /// Otro tipo de recompensa
   other('Other');
 
   final String displayName;
   const RewardType(this.displayName);
 }
-
-/// Sistema de recompensas por nivel
-/// Define qué se desbloquea en cada nivel
 class LevelRewardsSystem {
-  /// Mapa de niveles y sus recompensas
+ 
   static final Map<int, List<LevelReward>> _rewards = {
-    // Nivel 2: Primera insignia
+    
     2: [
       LevelReward(
         level: 2,
@@ -108,7 +93,7 @@ class LevelRewardsSystem {
       ),
     ],
     
-    // Nivel 5: Explorer
+
     5: [
       LevelReward(
         level: 5,
@@ -128,7 +113,6 @@ class LevelRewardsSystem {
       ),
     ],
     
-    // Nivel 10: Adventurer
     10: [
       LevelReward(
         level: 10,
@@ -155,8 +139,7 @@ class LevelRewardsSystem {
         icon: '🧭',
       ),
     ],
-    
-    // Nivel 15: Specialist
+
     15: [
       LevelReward(
         level: 15,
@@ -183,8 +166,7 @@ class LevelRewardsSystem {
         icon: '🖼️',
       ),
     ],
-    
-    // Nivel 20: Master
+
     20: [
       LevelReward(
         level: 20,
@@ -212,7 +194,6 @@ class LevelRewardsSystem {
       ),
     ],
     
-    // Nivel 25: Legend
     25: [
       LevelReward(
         level: 25,
@@ -231,8 +212,7 @@ class LevelRewardsSystem {
         icon: '🌟',
       ),
     ],
-    
-    // Nivel 30: Elite
+ 
     30: [
       LevelReward(
         level: 30,
@@ -253,17 +233,14 @@ class LevelRewardsSystem {
     ],
   };
 
-  /// Obtiene las recompensas para un nivel específico
   static List<LevelReward> getRewardsForLevel(int level) {
     return _rewards[level] ?? [];
   }
 
-  /// Verifica si un nivel tiene recompensas
   static bool hasRewards(int level) {
     return _rewards.containsKey(level) && _rewards[level]!.isNotEmpty;
   }
 
-  /// Obtiene todas las recompensas hasta un nivel dado
   static List<LevelReward> getAllRewardsUpToLevel(int level) {
     final List<LevelReward> allRewards = [];
     for (int i = 1; i <= level; i++) {
@@ -272,19 +249,17 @@ class LevelRewardsSystem {
     return allRewards;
   }
 
-  /// Obtiene el próximo nivel con recompensas después del nivel actual
+
   static int? getNextRewardLevel(int currentLevel) {
     final rewardLevels = _rewards.keys.where((l) => l > currentLevel).toList()
       ..sort();
     return rewardLevels.isEmpty ? null : rewardLevels.first;
   }
 
-  /// Obtiene todos los niveles que tienen recompensas
   static List<int> getAllRewardLevels() {
     return _rewards.keys.toList()..sort();
   }
 
-  /// Obtiene un resumen de cuántas recompensas de cada tipo hay por nivel
   static Map<int, Map<RewardType, int>> getRewardsSummary() {
     final Map<int, Map<RewardType, int>> summary = {};
     
@@ -299,7 +274,6 @@ class LevelRewardsSystem {
     return summary;
   }
 
-  /// Añade una recompensa personalizada (útil para eventos especiales)
   static void addCustomReward(LevelReward reward) {
     if (_rewards.containsKey(reward.level)) {
       _rewards[reward.level]!.add(reward);

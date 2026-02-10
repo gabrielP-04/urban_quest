@@ -6,7 +6,6 @@ import 'package:flutter/foundation.dart';
 class FirestoreService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
-  /// Crear perfil de usuario nuevo con información completa
   Future<void> createUserProfile({
     required String userId,
     required String email,
@@ -15,23 +14,20 @@ class FirestoreService {
     required String username,
   }) async {
     try {
-      // Verificar si ya existe el perfil
+      
       final docRef = _firestore
           .collection(AppConstants.usersCollection)
           .doc(userId);
       
       final docSnapshot = await docRef.get();
-      
-      // Si ya existe, no hacer nada
+           
       if (docSnapshot.exists) {
         debugPrint('El perfil ya existe para el usuario $userId');
         return;
       }
-
-      // Crear nombre completo para display
+     
       final displayName = '$firstName $lastName'.trim();
-
-      // Crear nuevo perfil
+      
       final now = DateTime.now();
       final userProfile = {
         'email': email,
@@ -39,9 +35,9 @@ class FirestoreService {
         'username': username,
         'firstName': firstName,
         'lastName': lastName,
-        'avatarId': 'avatar_1',           // ✅ Avatar por defecto
-        'bannerId': 'banner_1',           // ✅ Banner por defecto
-        'profileTitle': 'Urban Explorer', // ✅ Título por defecto
+        'avatarId': 'avatar_1',           
+        'bannerId': 'banner_1',           
+        'profileTitle': 'Urban Explorer', 
         'experiencePoints': 0,
         'visitedPoiIds': [],
         'completedRouteIds': [],
@@ -57,8 +53,7 @@ class FirestoreService {
       throw 'Error al crear perfil: $e';
     }
   }
-
-  /// Obtener perfil de usuario
+ 
   Future<UserProfile?> getUserProfile(String userId) async {
     try {
       final doc = await _firestore
@@ -75,8 +70,7 @@ class FirestoreService {
       return null;
     }
   }
-
-  /// Stream del perfil de usuario
+  
   Stream<UserProfile?> userProfileStream(String userId) {
     return _firestore
         .collection(AppConstants.usersCollection)
@@ -95,7 +89,7 @@ class FirestoreService {
     });
   }
 
-  /// Actualizar email del usuario
+  
   Future<void> updateUserEmail({
     required String userId,
     required String email,
@@ -114,7 +108,7 @@ class FirestoreService {
     }
   }
 
-  /// Actualizar perfil de usuario
+  
   Future<void> updateUserProfile(UserProfile profile) async {
     try {
       await _firestore

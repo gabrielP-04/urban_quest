@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import '../models/achievement.dart';
 
-/// Widget que muestra una notificación cuando se desbloquea un achievement
 class AchievementUnlockedDialog extends StatelessWidget {
   final Achievement achievement;
 
@@ -10,7 +9,7 @@ class AchievementUnlockedDialog extends StatelessWidget {
     required this.achievement,
   }) : super(key: key);
 
-  /// Mostrar el diálogo de achievement desbloqueado
+  
   static void show(BuildContext context, Achievement achievement) {
     showDialog(
       context: context,
@@ -21,14 +20,14 @@ class AchievementUnlockedDialog extends StatelessWidget {
     );
   }
 
-  /// Mostrar múltiples achievements desbloqueados
+  
   static void showMultiple(BuildContext context, List<Achievement> achievements) {
     if (achievements.isEmpty) return;
     
-    // Mostrar el primero
+    
     show(context, achievements.first);
     
-    // Si hay más, mostrarlos después
+    
     if (achievements.length > 1) {
       Future.delayed(const Duration(seconds: 3), () {
         if (context.mounted) {
@@ -67,7 +66,7 @@ class AchievementUnlockedDialog extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // Confetti/Stars animation placeholder
+            
             const Icon(
               Icons.celebration,
               size: 48,
@@ -75,7 +74,7 @@ class AchievementUnlockedDialog extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             
-            // "Achievement Unlocked" text
+            
             Text(
               'Achievement Unlocked!',
               style: TextStyle(
@@ -86,7 +85,7 @@ class AchievementUnlockedDialog extends StatelessWidget {
             ),
             const SizedBox(height: 20),
             
-            // Achievement icon
+            
             Container(
               width: 100,
               height: 100,
@@ -114,7 +113,7 @@ class AchievementUnlockedDialog extends StatelessWidget {
             ),
             const SizedBox(height: 20),
             
-            // Achievement title
+            
             Text(
               achievement.title,
               style: const TextStyle(
@@ -125,7 +124,7 @@ class AchievementUnlockedDialog extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             
-            // Achievement description
+            
             Text(
               achievement.description,
               style: TextStyle(
@@ -136,7 +135,7 @@ class AchievementUnlockedDialog extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             
-            // XP reward
+            
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               decoration: BoxDecoration(
@@ -169,7 +168,7 @@ class AchievementUnlockedDialog extends StatelessWidget {
             ),
             const SizedBox(height: 24),
             
-            // Close button
+            
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
@@ -198,7 +197,7 @@ class AchievementUnlockedDialog extends StatelessWidget {
   }
 }
 
-/// Notificación simple (SnackBar) para achievement desbloqueado
+
 class AchievementUnlockedSnackBar extends SnackBar {
   AchievementUnlockedSnackBar({
     Key? key,
@@ -256,7 +255,7 @@ class AchievementUnlockedSnackBar extends SnackBar {
               : null,
         );
 
-  /// Mostrar SnackBar de achievement desbloqueado
+  
   static void show(
     BuildContext context,
     Achievement achievement, {
