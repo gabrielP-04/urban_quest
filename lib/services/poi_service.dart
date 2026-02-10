@@ -18,91 +18,61 @@ class PoiService {
   
   // ============ MÉTODOS NUEVOS PARA GAMIFICACIÓN ============
 
-  /// Marca un POI como visitado en Firestore
-  /// Esto sincroniza el progreso del usuario en la nube
-  static Future<void> markPoiAsVisitedInFirestore(String poiId) async {
+  /// Gets visited POIs from Firestore - reads from "visitedPoiIds"
+ static Future<Set<String>> getVisitedPoisFromFirestore() async {
     final userId = FirebaseAuth.instance.currentUser?.uid;
-    if (userId == null) {
-      print('User not authenticated, cannot save to Firestore');
-      return;
-    }
-
-    try {
-      // IMPORTANTE: Verificar que no esté ya marcado para evitar duplicados
-      final userDoc = await _firestore.collection('users').doc(userId).get();
-      final currentVisited = userDoc.data()?['visitedPOIs'] as List<dynamic>? ?? [];
-      
-      if (currentVisited.contains(poiId)) {
-        print('POI $poiId already marked as visited, skipping');
-        return;
-      }
-
-      await _firestore.collection('users').doc(userId).set({
-        'visitedPOIs': FieldValue.arrayUnion([poiId]),
-        'totalPOIsVisited': FieldValue.increment(1),
-        'lastVisitDate': FieldValue.serverTimestamp(),
-      }, SetOptions(merge: true));
-      
-      print('POI $poiId marked as visited in Firestore');
-    } catch (e) {
-      print('Error saving visited POI to Firestore: $e');
-      rethrow;
-    }
-  }
-
-  /// Obtiene la lista de POIs visitados desde Firestore
-  static Future<Set<String>> getVisitedPoisFromFirestore() async {
-    final userId = FirebaseAuth.instance.currentUser?.uid;
-    if (userId == null) {
-      print('User not authenticated, cannot load from Firestore');
-      return {};
-    }
+    if (userId == null) return {};
 
     try {
       final doc = await _firestore.collection('users').doc(userId).get();
-      
-      if (!doc.exists) {
-        print('User document does not exist in Firestore');
-        return {};
-      }
+      if (!doc.exists) return {};
 
       final data = doc.data();
-      final visitedList = data?['visitedPOIs'] as List<dynamic>?;
-      
-      if (visitedList == null) {
-        return {};
-      }
+      // Read from BOTH fields for backwards compatibility
+      final visitedPoiIds = data?['visitedPoiIds'] as List<dynamic>? ?? [];
+      final visitedPOIsOld = data?['visitedPOIs'] as List<dynamic>? ?? [];
 
-      return visitedList.cast<String>().toSet();
+      return <String>{
+        ...visitedPoiIds.cast<String>(),
+        ...visitedPOIsOld.cast<String>(),
+      };
     } catch (e) {
       print('Error loading visited POIs from Firestore: $e');
       return {};
     }
   }
 
-  /// Sincroniza POIs visitados: combina local y Firestore
-  /// Retorna el set combinado y lo guarda en ambos lugares
+  static Future<void> markPoiAsVisitedInFirestore(String poiId) async {
+    final userId = FirebaseAuth.instance.currentUser?.uid;
+    if (userId == null) return;
+
+    try {
+      await _firestore.collection('users').doc(userId).update({
+        'visitedPoiIds': FieldValue.arrayUnion([poiId]),
+      });
+    } catch (e) {
+      print('Error saving visited POI to Firestore: $e');
+      rethrow;
+    }
+  }
+
   static Future<Set<String>> syncVisitedPois(Set<String> localPois) async {
     final firestorePois = await getVisitedPoisFromFirestore();
-    
-    // Combinar ambos sets
     final combined = <String>{...localPois, ...firestorePois};
-    
-    // Si hay diferencias, actualizar Firestore
+
     if (combined.length > firestorePois.length) {
       final userId = FirebaseAuth.instance.currentUser?.uid;
       if (userId != null) {
         try {
           await _firestore.collection('users').doc(userId).update({
-            'visitedPOIs': combined.toList(),
-            'totalPOIsVisited': combined.length,
+            'visitedPoiIds': combined.toList(),
           });
         } catch (e) {
           print('Error syncing POIs to Firestore: $e');
         }
       }
     }
-    
+
     return combined;
   }
 

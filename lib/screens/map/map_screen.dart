@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:geolocator/geolocator.dart';
@@ -73,8 +74,9 @@ class _MapScreenState extends State<MapScreen> {
   final MapController _mapController = MapController();
 
   StreamSubscription<Position>? _positionSub;
-  
-  final GamificationController _gamificationController = GamificationController();
+
+  final GamificationController _gamificationController =
+      GamificationController();
 
   List<RouteModel> _availableRoutes = [];
 
@@ -276,24 +278,44 @@ class _MapScreenState extends State<MapScreen> {
 
   Future<void> _loadVisitedPois() async {
     try {
-      // Cargar desde storage local
-      final localIds = await VisitedPoiStorage.loadVisitedPoiIds(userId: userId);
-      
-      // NUEVO: Cargar desde Firestore
-      final firestoreIds = await PoiService.getVisitedPoisFromFirestore();
-      
+      final uid = userId;
+      if (uid == null) return;
+
+      // 1. Load from SharedPreferences (local backup)
+      final localIds = await VisitedPoiStorage.loadVisitedPoiIds(userId: uid);
+
+      // 2. Load from Firestore (source of truth) - read "visitedPoiIds"
+      final userDoc =
+          await FirebaseFirestore.instance.collection('users').doc(uid).get();
+
+      final firestoreIds = <String>{};
+      if (userDoc.exists) {
+        final data = userDoc.data();
+        final list = data?['visitedPoiIds'] as List<dynamic>? ?? [];
+        firestoreIds.addAll(list.cast<String>());
+      }
+
+      // 3. Combine both sources
+      final combined = <String>{...localIds, ...firestoreIds};
+
       setState(() {
-        _visitedPoiIds.clear(); // Limpiar primero
-        _visitedPoiIds.addAll(localIds);
-        _visitedPoiIds.addAll(firestoreIds);
+        _visitedPoiIds.clear();
+        _visitedPoiIds.addAll(combined);
       });
-      
-      // Sincronizar - guardar la unión en local
-      await VisitedPoiStorage.saveVisitedPoiIds(_visitedPoiIds);
-      
-      debugPrint('Loaded ${_visitedPoiIds.length} visited POIs');
+
+      // 4. Sync back to local
+      await VisitedPoiStorage.saveVisitedPoiIds(combined, userId: uid);
+
+      // 5. Sync back to Firestore if local had extra
+      if (combined.length > firestoreIds.length) {
+        await FirebaseFirestore.instance.collection('users').doc(uid).update({
+          'visitedPoiIds': combined.toList(),
+        });
+      }
+
+      debugPrint('✅ Loaded ${combined.length} visited POIs');
     } catch (e) {
-      debugPrint('Error loading visited POIs: $e');
+      debugPrint('❌ Error loading visited POIs: $e');
     }
   }
 
@@ -328,10 +350,10 @@ class _MapScreenState extends State<MapScreen> {
     return Scaffold(
         appBar: AppBar(
           title: Text(
-          'Map',
-          style: Theme.of(context).textTheme.displayMedium,
-        ),
-        centerTitle: true,
+            'Map',
+            style: Theme.of(context).textTheme.displayMedium,
+          ),
+          centerTitle: true,
         ),
         body: _isLoading
             ? const Center(child: CircularProgressIndicator())
@@ -386,14 +408,13 @@ class _MapScreenState extends State<MapScreen> {
                     ],
                   ),
                   _buildMapProgress(),
-                  
+
                   // Botones zoom in - zoom out
                   Positioned(
                     right: 16,
                     bottom: 120,
                     child: Column(
                       children: [
-                       
                         FloatingActionButton(
                           heroTag: 'zoom_in',
                           backgroundColor: Colors.deepOrange,
@@ -417,16 +438,13 @@ class _MapScreenState extends State<MapScreen> {
                           },
                           child: const Icon(Icons.remove),
                         ),
-
                         const SizedBox(height: 24),
-                      
                         FloatingActionButton(
                           heroTag: 'routes',
                           backgroundColor: Colors.deepOrange,
                           onPressed: _openRouteList,
                           child: const Icon(Icons.alt_route),
                         ),
-
                         if (_isCreatingRoute && _selectedPois.length >= 2) ...[
                           const SizedBox(height: 12),
                           FloatingActionButton(
@@ -861,7 +879,8 @@ class _MapScreenState extends State<MapScreen> {
 
       if (distance <= 50) {
         if (_nearbyPoi?.id != poi.id) {
-          debugPrint('📍 [MAP] User is near: ${poi.name} (${distance.toStringAsFixed(1)}m)');
+          debugPrint(
+              '📍 [MAP] User is near: ${poi.name} (${distance.toStringAsFixed(1)}m)');
         }
         setState(() {
           _nearbyPoi = poi;
@@ -880,41 +899,45 @@ class _MapScreenState extends State<MapScreen> {
 
   // MODIFICADO: Integración con gamificación
   Future<void> _markPoiAsVisited(Poi poi) async {
-    final userId = FirebaseAuth.instance.currentUser?.uid;
-    if (userId == null) {
+    final uid = userId;
+    if (uid == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Please log in first')),
       );
       return;
     }
 
-    // Si ya fue visitado, no hacer nada
     if (_visitedPoiIds.contains(poi.id)) {
       return;
     }
 
-    // Actualizar UI inmediatamente
+    // Update UI immediately
     setState(() {
       _visitedPoiIds.add(poi.id);
       _nearbyPoi = null;
     });
 
     try {
-      // Usar el GamificationController para procesar la visita (YA INTEGRADO CON ACHIEVEMENTS)
+      // 1. Save to Firestore (source of truth)
+      await FirebaseFirestore.instance.collection('users').doc(uid).update({
+        'visitedPoiIds': FieldValue.arrayUnion([poi.id]),
+      });
+
+      // 2. Process gamification (XP, momentum, achievements)
       final result = await _gamificationController.processPOIVisit(
-        userId: userId,
+        userId: uid,
         poiId: poi.id,
         poiName: poi.name,
-        poiCategory: poi.category, // Importante para achievements por categoría
+        poiCategory: poi.category,
         isFirstVisit: true,
       );
 
-      // Guardar en SharedPreferences (backup local)
-      await VisitedPoiStorage.saveVisitedPoiIds(_visitedPoiIds);
+      // 3. Save to SharedPreferences (local backup WITH userId)
+      await VisitedPoiStorage.saveVisitedPoiIds(_visitedPoiIds, userId: uid);
 
       if (!mounted) return;
 
-      // Mostrar mensaje de POI visitado con XP
+      // 4. Show XP snackbar
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('${poi.name} visited! +${result.xpGained} XP'),
@@ -923,10 +946,8 @@ class _MapScreenState extends State<MapScreen> {
         ),
       );
 
-      // Esperar un poco antes de mostrar achievements
+      // 5. Show achievements if unlocked
       await Future.delayed(const Duration(milliseconds: 500));
-
-      // Si se desbloquearon achievements, mostrarlos
       if (result.hasNewAchievements && mounted) {
         AchievementUnlockedDialog.showMultiple(
           context,
@@ -934,7 +955,7 @@ class _MapScreenState extends State<MapScreen> {
         );
       }
 
-      // Si hubo level-up, también mostrarlo
+      // 6. Show level-up if applicable
       if (result.didLevelUp && mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -947,8 +968,11 @@ class _MapScreenState extends State<MapScreen> {
         );
       }
     } catch (e) {
-      debugPrint('Error al marcar POI como visitado: $e');
-      
+      debugPrint('❌ Error marking POI as visited: $e');
+      setState(() {
+        _visitedPoiIds.remove(poi.id);
+      });
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -974,7 +998,7 @@ class _MapScreenState extends State<MapScreen> {
         _showMomentumActivatedBanner();
       });
     }
-    
+
     // Celebrar niveles altos de momentum
     if (result.momentumState.level == MomentumLevel.high ||
         result.momentumState.level == MomentumLevel.blazing) {
@@ -1026,16 +1050,17 @@ class _MapScreenState extends State<MapScreen> {
                       ),
                       const SizedBox(height: 8),
                       ...snapshot.data!.map((reward) => Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 4),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Text(reward.icon ?? '🏆', style: const TextStyle(fontSize: 20)),
-                            const SizedBox(width: 8),
-                            Flexible(child: Text(reward.name)),
-                          ],
-                        ),
-                      )),
+                            padding: const EdgeInsets.symmetric(vertical: 4),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Text(reward.icon ?? '🏆',
+                                    style: const TextStyle(fontSize: 20)),
+                                const SizedBox(width: 8),
+                                Flexible(child: Text(reward.name)),
+                              ],
+                            ),
+                          )),
                     ],
                   );
                 }
@@ -1057,11 +1082,11 @@ class _MapScreenState extends State<MapScreen> {
   void _showXPSnackbar(POIVisitResult result, Poi poi) {
     final message = StringBuffer('${poi.name} visited! ');
     message.write('+${result.xpGained} XP');
-    
+
     if (result.isFirstVisit) {
       message.write(' (First visit bonus!)');
     }
-    
+
     if (result.hasMomentum) {
       message.write(' ${result.momentumState.level.icon}');
     }
@@ -1103,7 +1128,8 @@ class _MapScreenState extends State<MapScreen> {
       SnackBar(
         content: Row(
           children: [
-            Text('${momentum.level.icon} ', style: const TextStyle(fontSize: 20)),
+            Text('${momentum.level.icon} ',
+                style: const TextStyle(fontSize: 20)),
             Expanded(
               child: Text(
                 momentum.statusMessage,
@@ -1121,82 +1147,82 @@ class _MapScreenState extends State<MapScreen> {
   }
 
   Widget _buildMomentumBanner(MomentumState momentum) {
-  // Si no está activo, no mostrar nada
-  if (!momentum.isActive) return const SizedBox.shrink();
+    // Si no está activo, no mostrar nada
+    if (!momentum.isActive) return const SizedBox.shrink();
 
-  return Positioned(
-    top: 16,
-    left: 16,
-    right: 16,
-    child: Container(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [Color(0xFFFF9A56), Color(0xFFFF7A3D)],
+    return Positioned(
+      top: 16,
+      left: 16,
+      right: 16,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            colors: [Color(0xFFFF9A56), Color(0xFFFF7A3D)],
+          ),
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0xFFFF9A56).withOpacity(0.4),
+              blurRadius: 12,
+              offset: const Offset(0, 4),
+            ),
+          ],
         ),
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFFFF9A56).withOpacity(0.4),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          // Icono de fuego
-          Text(
-            momentum.level.icon,
-            style: const TextStyle(fontSize: 28),
-          ),
-          const SizedBox(width: 12),
-          // Información
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  momentum.level.displayName,
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  '${momentum.sessionPOIsVisited} POIs this session',
-                  style: const TextStyle(
-                    fontSize: 13,
-                    color: Colors.white,
-                  ),
-                ),
-              ],
+        child: Row(
+          children: [
+            // Icono de fuego
+            Text(
+              momentum.level.icon,
+              style: const TextStyle(fontSize: 28),
             ),
-          ),
-          // Bonus
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-            decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.25),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Text(
-              '+${((momentum.multiplier - 1) * 100).toInt()}% XP',
-              style: const TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
+            const SizedBox(width: 12),
+            // Información
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    momentum.level.displayName,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    '${momentum.sessionPOIsVisited} POIs this session',
+                    style: const TextStyle(
+                      fontSize: 13,
+                      color: Colors.white,
+                    ),
+                  ),
+                ],
               ),
             ),
-          ),
-        ],
+            // Bonus
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.25),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Text(
+                '+${((momentum.multiplier - 1) * 100).toInt()}% XP',
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
-    ),
-  );
-}
+    );
+  }
 
   // Tu SnackBar original para fallback
   void _showOriginalSnackbar(String poiName) {
@@ -1214,28 +1240,28 @@ class _MapScreenState extends State<MapScreen> {
   }
 
   Future<MomentumState> _getMomentumState() async {
-  final userId = FirebaseAuth.instance.currentUser?.uid;
-  if (userId == null) {
-    return MomentumState(
-      isActive: false,
-      sessionPOIsVisited: 0,
-      sessionDuration: Duration.zero,
-      multiplier: 1.0,
-      level: MomentumLevel.none,
-    );
-  }
-  
-  try {
-    return await _gamificationController.momentumService.getMomentumState(userId);
-  } catch (e) {
-    return MomentumState(
-      isActive: false,
-      sessionPOIsVisited: 0,
-      sessionDuration: Duration.zero,
-      multiplier: 1.0,
-      level: MomentumLevel.none,
-    );
-  }
-}
-}
+    final userId = FirebaseAuth.instance.currentUser?.uid;
+    if (userId == null) {
+      return MomentumState(
+        isActive: false,
+        sessionPOIsVisited: 0,
+        sessionDuration: Duration.zero,
+        multiplier: 1.0,
+        level: MomentumLevel.none,
+      );
+    }
 
+    try {
+      return await _gamificationController.momentumService
+          .getMomentumState(userId);
+    } catch (e) {
+      return MomentumState(
+        isActive: false,
+        sessionPOIsVisited: 0,
+        sessionDuration: Duration.zero,
+        multiplier: 1.0,
+        level: MomentumLevel.none,
+      );
+    }
+  }
+}

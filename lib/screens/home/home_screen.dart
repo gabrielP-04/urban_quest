@@ -6,6 +6,8 @@ import '../../models/user_profile.dart';
 import '../../core/utils/profile_assets.dart';
 import 'package:urban_quest/models/gamification_models.dart';
 import 'package:urban_quest/services/gamification_services.dart';
+import '../../services/poi_service.dart';
+import '../../models/poi.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({Key? key}) : super(key: key);
@@ -269,10 +271,6 @@ class _MapCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Calcular progreso del mapa (ejemplo basado en POIs visitados)
-    final totalPois = 50; // Esto debería venir de tu configuración
-    final discoveredPercent =
-        ((profile.totalPoisVisited / totalPois) * 100).clamp(0, 100).round();
 
     return GestureDetector(
       onTap: () {
@@ -364,68 +362,6 @@ class _MapCard extends StatelessWidget {
                 right: 90,
                 child: _MapMarker(Icons.park, Colors.green.shade700),
               ),
-              // Indicador de progreso
-              Positioned(
-                bottom: 20,
-                left: 20,
-                right: 20,
-                child: Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF2D3748),
-                    borderRadius: BorderRadius.circular(20),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.3),
-                        blurRadius: 10,
-                        offset: const Offset(0, 4),
-                      ),
-                    ],
-                  ),
-                  child: Row(
-                    children: [
-                      const Icon(
-                        Icons.explore,
-                        color: Colors.white,
-                        size: 20,
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Mapa Descubierto: $discoveredPercent%',
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 14,
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            ClipRRect(
-                              borderRadius: BorderRadius.circular(10),
-                              child: SizedBox(
-                                height: 6,
-                                child: LinearProgressIndicator(
-                                  value: discoveredPercent / 100,
-                                  backgroundColor:
-                                      Colors.white.withOpacity(0.3),
-                                  valueColor:
-                                      const AlwaysStoppedAnimation<Color>(
-                                    Colors.deepOrange,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
             ],
           ),
         ),
@@ -461,7 +397,6 @@ class _MapMarker extends StatelessWidget {
   }
 }
 
-// ==================== STATS CARD ====================
 class _StatsCard extends StatelessWidget {
   final UserProfile profile;
 
@@ -469,75 +404,80 @@ class _StatsCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Calcular progreso del mapa
-    final totalPois = 50;
-    final discoveredPercent =
-        ((profile.totalPoisVisited / totalPois) * 100).clamp(0, 100).round();
+    return FutureBuilder<List<Poi>>(
+      future: PoiService.loadPois(),
+      builder: (context, snapshot) {
+        // Use actual total POIs from JSON, fallback to 50 if not loaded yet
+        final totalPois = snapshot.hasData ? snapshot.data!.length : 50;
+        final discoveredPercent =
+            ((profile.totalPoisVisited / totalPois) * 100).clamp(0, 100).round();
 
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.06),
-            blurRadius: 15,
-            offset: const Offset(0, 4),
+        return Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(24),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.06),
+                blurRadius: 15,
+                offset: const Offset(0, 4),
+              ),
+            ],
           ),
-        ],
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: _StatItem(
-              icon: Icons.place,
-              color: Colors.blue,
-              label: 'Lugares\nVisitados',
-              value: '${profile.totalPoisVisited}',
-            ),
+          child: Row(
+            children: [
+              Expanded(
+                child: _StatItem(
+                  icon: Icons.place,
+                  color: Colors.blue,
+                  label: 'Places\nVisited',
+                  value: '${profile.totalPoisVisited}',
+                ),
+              ),
+              Container(
+                width: 1,
+                height: 50,
+                color: Colors.grey.shade200,
+              ),
+              Expanded(
+                child: _StatItem(
+                  icon: Icons.check_circle,
+                  color: Colors.green,
+                  label: 'Routes\nCompleted',
+                  value: '${profile.totalRoutesCompleted}',
+                ),
+              ),
+              Container(
+                width: 1,
+                height: 50,
+                color: Colors.grey.shade200,
+              ),
+              Expanded(
+                child: _StatItem(
+                  icon: Icons.emoji_events,
+                  color: Colors.amber,
+                  label: 'Badges',
+                  value: '${profile.totalAchievements}',
+                ),
+              ),
+              Container(
+                width: 1,
+                height: 50,
+                color: Colors.grey.shade200,
+              ),
+              Expanded(
+                child: _StatItem(
+                  icon: Icons.map,
+                  color: Colors.deepOrange,
+                  label: 'Map\nDiscovered',
+                  value: '$discoveredPercent%',
+                ),
+              ),
+            ],
           ),
-          Container(
-            width: 1,
-            height: 50,
-            color: Colors.grey.shade200,
-          ),
-          Expanded(
-            child: _StatItem(
-              icon: Icons.check_circle,
-              color: Colors.green,
-              label: 'Rutas\nCompletadas',
-              value: '${profile.totalRoutesCompleted}',
-            ),
-          ),
-          Container(
-            width: 1,
-            height: 50,
-            color: Colors.grey.shade200,
-          ),
-          Expanded(
-            child: _StatItem(
-              icon: Icons.emoji_events,
-              color: Colors.amber,
-              label: 'Logros',
-              value: '${profile.totalAchievements}',
-            ),
-          ),
-          Container(
-            width: 1,
-            height: 50,
-            color: Colors.grey.shade200,
-          ),
-          Expanded(
-            child: _StatItem(
-              icon: Icons.map,
-              color: Colors.deepOrange,
-              label: 'Mapa',
-              value: '$discoveredPercent%',
-            ),
-          ),
-        ],
-      ),
+        );
+      },
     );
   }
 }

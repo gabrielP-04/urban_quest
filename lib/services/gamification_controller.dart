@@ -1,8 +1,11 @@
+import 'package:flutter/material.dart';
+
 import '../models/gamification_models.dart';
 import '../models/achievement.dart';
 import 'experience_service.dart';
 import 'momentum_service.dart';
 import 'achievement_service.dart';
+import '../services/poi_service.dart';
 
 /// Controlador principal que coordina todos los servicios de gamificación
 /// Versión extendida con soporte para Achievements
@@ -33,7 +36,7 @@ class GamificationController {
     try {
       // 1. Actualizar momentum
       final momentumState = await _momentumService.updateMomentum(userId);
-      
+
       // 2. Otorgar experiencia por la visita
       final xpResult = await _experienceService.awardPOIVisit(
         userId: userId,
@@ -45,29 +48,36 @@ class GamificationController {
       );
 
       // 3. Obtener información actualizada del usuario
-      final gamificationData = await _experienceService.getUserGamificationData(userId);
-      
-      // 4. NUEVO: Verificar achievements desbloqueados
-      final userDoc = await _achievementService.firestore.collection('users').doc(userId).get();
+      final gamificationData =
+          await _experienceService.getUserGamificationData(userId);
+
+      // 4. Verificar achievements desbloqueados
+      final userDoc = await _achievementService.firestore
+          .collection('users')
+          .doc(userId)
+          .get();
       final userData = userDoc.data()!;
-      
+
       final totalPois = (userData['visitedPoiIds'] as List?)?.length ?? 0;
-      final totalRoutes = (userData['completedRouteIds'] as List?)?.length ?? 0;
-      
-      // Calcular progreso por categoría (simplificado - puedes mejorarlo)
-      final categoryProgress = <String, int>{};
-      if (poiCategory != null) {
-        categoryProgress[poiCategory] = (categoryProgress[poiCategory] ?? 0) + 1;
-      }
-      
-      final newAchievements = await _achievementService.checkAndUnlockAchievements(
+      final totalRoutes =
+          (userData['completedRouteIds'] as List?)?.length ?? 0;
+
+      // =====================================================
+      // FIX: Calculate REAL category progress from ALL visited POIs
+      // =====================================================
+      final categoryProgress = await _calculateCategoryProgress(userId);
+
+      final newAchievements =
+          await _achievementService.checkAndUnlockAchievements(
         userId: userId,
         totalPoisVisited: totalPois,
         totalRoutesCompleted: totalRoutes,
         currentLevel: gamificationData.level,
         categoryProgress: categoryProgress,
-        momentumActivations: userData['totalMomentumActivations'] as int? ?? 0,
-        hasReachedBlazingMomentum: userData['hasReachedBlazingMomentum'] as bool? ?? false,
+        momentumActivations:
+            userData['totalMomentumActivations'] as int? ?? 0,
+        hasReachedBlazingMomentum:
+            userData['hasReachedBlazingMomentum'] as bool? ?? false,
       );
 
       return POIVisitResult(
@@ -75,12 +85,63 @@ class GamificationController {
         gamificationData: gamificationData,
         momentumState: momentumState,
         isFirstVisit: isFirstVisit,
-        newAchievements: newAchievements, // NUEVO
+        newAchievements: newAchievements,
       );
     } catch (e) {
       throw Exception('Error al procesar visita a POI: $e');
     }
   }
+
+/// Calculates the real category progress by cross-referencing
+  /// the user's visitedPoiIds with the local POI data (pois.json).
+  Future<Map<String, int>> _calculateCategoryProgress(String userId) async {
+    try {
+      // 1. Get user's visited POI IDs from Firestore
+      final userDoc = await _achievementService.firestore
+          .collection('users')
+          .doc(userId)
+          .get();
+      final visitedIds = List<String>.from(
+        userDoc.data()?['visitedPoiIds'] as List? ?? [],
+      );
+
+      if (visitedIds.isEmpty) return {};
+
+      // 2. Load all POIs from local JSON to get their categories
+      final allPois = await PoiService.loadPois();
+
+      // 3. Count visited POIs per category
+      final categoryCount = <String, int>{};
+      for (final poi in allPois) {
+        if (visitedIds.contains(poi.id)) {
+          categoryCount[poi.category] =
+              (categoryCount[poi.category] ?? 0) + 1;
+        }
+      }
+
+      // 4. Map POI categories to achievement categories
+      //    POI categories: "monument", "gastronomy", "cultural", "viewpoint"
+      //    Achievement expects: "culture", "food"
+      final mappedProgress = <String, int>{};
+
+      // Culture achievements: count "monument" + "cultural" POIs
+      mappedProgress['culture'] =
+          (categoryCount['monument'] ?? 0) +
+          (categoryCount['cultural'] ?? 0);
+
+      // Food achievements: count "gastronomy" POIs
+      mappedProgress['food'] = categoryCount['gastronomy'] ?? 0;
+
+      // Also pass the raw categories in case you add more achievements later
+      mappedProgress.addAll(categoryCount);
+
+      return mappedProgress;
+    } catch (e) {
+      debugPrint('Error calculating category progress: $e');
+      return {};
+    }
+  }
+
 
   /// Procesa la finalización de una ruta (con achievements)
   Future<RouteCompletionResult> processRouteCompletion({
@@ -171,28 +232,37 @@ class GamificationController {
   /// Obtiene el dashboard completo de gamificación del usuario (con achievements)
   Future<GamificationDashboard> getUserDashboard(String userId) async {
     try {
-      final gamificationData = await _experienceService.getUserGamificationData(userId);
+      final gamificationData =
+          await _experienceService.getUserGamificationData(userId);
       final momentumState = await _momentumService.getMomentumState(userId);
       final sessionStats = await _momentumService.getSessionStats(userId);
       final xpStats = await _experienceService.getXPStatsBySource(userId);
-      
-      // Calcular estadísticas adicionales
-      final nextRewardLevel = LevelRewardsSystem.getNextRewardLevel(gamificationData.level);
+
+      final nextRewardLevel =
+          LevelRewardsSystem.getNextRewardLevel(gamificationData.level);
       final nextRewards = nextRewardLevel != null
           ? LevelRewardsSystem.getRewardsForLevel(nextRewardLevel)
           : <LevelReward>[];
 
-      // NUEVO: Obtener achievements
-      final userDoc = await _achievementService.firestore.collection('users').doc(userId).get();
+      final userDoc = await _achievementService.firestore
+          .collection('users')
+          .doc(userId)
+          .get();
       final userData = userDoc.data()!;
       final totalPois = (userData['visitedPoiIds'] as List?)?.length ?? 0;
-      final totalRoutes = (userData['completedRouteIds'] as List?)?.length ?? 0;
-      
-      final achievementProgress = await _achievementService.getAchievementProgress(
+      final totalRoutes =
+          (userData['completedRouteIds'] as List?)?.length ?? 0;
+
+      // FIX: Use real category progress
+      final categoryProgress = await _calculateCategoryProgress(userId);
+
+      final achievementProgress =
+          await _achievementService.getAchievementProgress(
         userId: userId,
         totalPoisVisited: totalPois,
         totalRoutesCompleted: totalRoutes,
         currentLevel: gamificationData.level,
+        categoryProgress: categoryProgress, // ← NOW PASSES REAL DATA
       );
 
       return GamificationDashboard(
@@ -202,12 +272,17 @@ class GamificationController {
         xpStatsBySource: xpStats,
         nextRewardLevel: nextRewardLevel,
         nextRewards: nextRewards,
-        achievementProgress: achievementProgress, // NUEVO
+        achievementProgress: achievementProgress,
       );
     } catch (e) {
       throw Exception('Error al obtener dashboard: $e');
     }
   }
+
+
+
+
+
 
   /// Verifica el progreso hacia el siguiente nivel
   Future<LevelProgress> getLevelProgress(String userId) async {
